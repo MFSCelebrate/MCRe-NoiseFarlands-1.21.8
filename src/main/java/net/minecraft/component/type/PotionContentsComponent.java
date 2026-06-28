@@ -57,7 +57,7 @@ import net.minecraft.world.World;
 public record PotionContentsComponent(Optional<RegistryEntry<Potion>> potion, Optional<Integer> customColor, List<StatusEffectInstance> customEffects, Optional<String> customName) implements Consumable,
 TooltipAppender
 {
-    final private List<StatusEffectInstance> customEffects;
+    private final List<StatusEffectInstance> customEffects;
     final static public PotionContentsComponent DEFAULT = new PotionContentsComponent(Optional.empty(), Optional.empty(), List.of(), Optional.empty());
     final static private Text NONE_TEXT = Text.translatable("effect.none").formatted(Formatting.GRAY);
     final static public int EFFECTLESS_COLOR = -13083194;

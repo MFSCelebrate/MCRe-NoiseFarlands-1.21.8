@@ -1,6 +1,6 @@
 /*
  * Decompiled with CFR 0.152.
- * 
+ *
  * Could not load the following classes:
  *  com.mojang.logging.LogUtils
  *  net.fabricmc.api.EnvType
@@ -37,19 +37,18 @@ import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-@Environment(value=EnvType.CLIENT)
+@Environment(value = EnvType.CLIENT)
 public class RealmsUploader {
-    final static private Logger LOGGER = LogUtils.getLogger();
-    final static public int MAX_ATTEMPTS = 20;
-    final private RealmsClient client = RealmsClient.create();
-    final private Path directory;
-    final private RealmsSlot options;
-    final private Session session;
-    final private long worldId;
-    final private UploadProgressTracker progressTracker;
+    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final int MAX_ATTEMPTS = 20;
+    private final RealmsClient client = RealmsClient.create();
+    private final Path directory;
+    private final RealmsSlot options;
+    private final Session session;
+    private final long worldId;
+    private final UploadProgressTracker progressTracker;
     private volatile boolean cancelled;
-    @Nullable
-    private FileUpload upload;
+    @Nullable private FileUpload upload;
 
     public RealmsUploader(Path directory, RealmsSlot options, Session session, long worldId, UploadProgressTracker progressTracker) {
         this.directory = directory;
@@ -63,39 +62,29 @@ public class RealmsUploader {
         return CompletableFuture.runAsync(() -> {
             File file = null;
             try {
-                FileUpload fileUpload;
                 UploadInfo uploadInfo = this.uploadSync();
                 file = UploadCompressor.compress(this.directory, () -> this.cancelled);
                 this.progressTracker.updateProgressDisplay();
-                this.upload = fileUpload = new FileUpload(file, this.worldId, this.options.slotId, uploadInfo, this.session, SharedConstants.getGameVersion().name(), this.options.options.version, this.progressTracker.getUploadProgress());
-                UploadResult uploadResult = fileUpload.upload();
+                this.upload = new FileUpload(file, this.worldId, this.options.slotId, uploadInfo, this.session, SharedConstants.getGameVersion().name(), this.options.options.version, this.progressTracker.getUploadProgress());
+                UploadResult uploadResult = this.upload.upload();
                 String string = uploadResult.getErrorMessage();
                 if (string != null) {
                     throw new FailedRealmsUploadException(string);
                 }
                 UploadTokenCache.invalidate(this.worldId);
                 this.client.updateSlot(this.worldId, this.options.slotId, this.options.options, this.options.settings);
-                if (file == null) return;
-            }
-            catch (IOException iOException) {
-                try {
-                    throw new FailedRealmsUploadException(iOException.getMessage());
-                    catch (RealmsServiceException realmsServiceException) {
-                        throw new FailedRealmsUploadException(realmsServiceException.error.getText());
-                    }
-                    catch (InterruptedException | CancellationException exception) {
-                        throw new CancelledRealmsUploadException();
-                    }
-                }
-                catch (Throwable throwable) {
-                    if (file == null) throw throwable;
-                    LOGGER.debug("Deleting file {}", (Object)file.getAbsolutePath());
+            } catch (IOException iOException) {
+                throw new FailedRealmsUploadException(iOException.getMessage());
+            } catch (RealmsServiceException realmsServiceException) {
+                throw new FailedRealmsUploadException(realmsServiceException.error.getText());
+            } catch (InterruptedException | CancellationException exception) {
+                throw new CancelledRealmsUploadException();
+            } finally {
+                if (file != null) {
+                    LOGGER.debug("Deleting file {}", file.getAbsolutePath());
                     file.delete();
-                    throw throwable;
                 }
             }
-            LOGGER.debug("Deleting file {}", (Object)file.getAbsolutePath());
-            file.delete();
         }, Util.getMainWorkerExecutor());
     }
 
@@ -119,12 +108,10 @@ public class RealmsUploader {
                     throw new CloseFailureRealmsUploadException();
                 }
                 return uploadInfo;
-            }
-            catch (RetryCallException retryCallException) {
-                Thread.sleep((long)retryCallException.delaySeconds * 1000L);
+            } catch (RetryCallException retryCallException) {
+                Thread.sleep((long) retryCallException.delaySeconds * 1000L);
             }
         }
         throw new CloseFailureRealmsUploadException();
     }
 }
-

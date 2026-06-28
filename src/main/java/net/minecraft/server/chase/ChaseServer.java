@@ -1,6 +1,6 @@
 /*
  * Decompiled with CFR 0.152.
- * 
+ *
  * Could not load the following classes:
  *  com.mojang.logging.LogUtils
  *  org.apache.commons.io.IOUtils
@@ -32,15 +32,14 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 public class ChaseServer {
-    final static private Logger LOGGER = LogUtils.getLogger();
-    final private String ip;
-    final private int port;
-    final private PlayerManager playerManager;
-    final private int interval;
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private final String ip;
+    private final int port;
+    private final PlayerManager playerManager;
+    private final int interval;
     private volatile boolean running;
-    @Nullable
-    private ServerSocket socket;
-    final private CopyOnWriteArrayList<Socket> clientSockets = new CopyOnWriteArrayList();
+    @Nullable private ServerSocket socket;
+    private final CopyOnWriteArrayList<Socket> clientSockets = new CopyOnWriteArrayList();
 
     public ChaseServer(String ip, int port, PlayerManager playerManager, int interval) {
         this.ip = ip;
@@ -71,7 +70,8 @@ public class ChaseServer {
                 TeleportPos teleportPos2 = this.getTeleportPosition();
                 if (teleportPos2 != null && !teleportPos2.equals(teleportPos)) {
                     teleportPos = teleportPos2;
-                    byte[] bs = teleportPos2.getTeleportCommand().getBytes(StandardCharsets.US_ASCII);
+                    byte
+                            [] bs = teleportPos2.getTeleportCommand().getBytes(StandardCharsets.US_ASCII);
                     for (Socket socket : this.clientSockets) {
                         if (socket.isClosed()) continue;
                         Util.getIoWorkerExecutor().execute(() -> {
@@ -79,28 +79,28 @@ public class ChaseServer {
                                 OutputStream outputStream = socket.getOutputStream();
                                 outputStream.write(bs);
                                 outputStream.flush();
-                            }
-                            catch (IOException iOException) {
-                                LOGGER.info("Remote control client socket got an IO exception and will be closed", (Throwable)iOException);
-                                IOUtils.closeQuietly((Socket)socket);
+                            } catch (IOException iOException) {
+                                LOGGER.info("Remote control client socket got an IO exception and will be closed", (Throwable) iOException);
+                                IOUtils.closeQuietly((Socket) socket);
                             }
                         });
                     }
                 }
-                List list = this.clientSockets.stream().filter(Socket::isClosed).collect(Collectors.toList());
+                List list = this.clientSockets.stream().filter(Socket
+                        ::isClosed).collect(Collectors.toList());
                 this.clientSockets.removeAll(list);
             }
             if (!this.running) continue;
             try {
                 Thread.sleep(this.interval);
+            } catch (InterruptedException interruptedException) {
             }
-            catch (InterruptedException interruptedException) {}
         }
     }
 
     public void stop() {
         this.running = false;
-        IOUtils.closeQuietly((ServerSocket)this.socket);
+        IOUtils.closeQuietly((ServerSocket) this.socket);
         this.socket = null;
     }
 
@@ -111,35 +111,24 @@ public class ChaseServer {
         try {
             while (this.running) {
                 if (this.socket == null) continue;
-                LOGGER.info("Remote control server is listening for connections on port {}", (Object)this.port);
+                LOGGER.info("Remote control server is listening for connections on port {}", this.port);
                 Socket socket = this.socket.accept();
-                LOGGER.info("Remote control server received client connection on port {}", (Object)socket.getPort());
+                LOGGER.info("Remote control server received client connection on port {}", socket.getPort());
                 this.clientSockets.add(socket);
             }
-        }
-        catch (ClosedByInterruptException closedByInterruptException) {
-            block7: {
-                if (!this.running) break block7;
+        } catch (ClosedByInterruptException closedByInterruptException) {
+            if (this.running) {
                 LOGGER.info("Remote control server closed by interrupt");
             }
-            IOUtils.closeQuietly((ServerSocket)this.socket);
-        }
-        catch (IOException iOException) {
-            block8: {
-                if (!this.running) break block8;
-                LOGGER.error("Remote control server closed because of an IO exception", (Throwable)iOException);
-                {
-                    catch (Throwable throwable) {
-                        IOUtils.closeQuietly((ServerSocket)this.socket);
-                        throw throwable;
-                    }
-                }
+        } catch (IOException iOException) {
+            if (this.running) {
+                LOGGER.error("Remote control server closed because of an IO exception", iOException);
             }
-            IOUtils.closeQuietly((ServerSocket)this.socket);
+        } finally {
+            IOUtils.closeQuietly(this.socket);
+            LOGGER.info("Remote control server is now stopped");
+            this.running = false;
         }
-        IOUtils.closeQuietly((ServerSocket)this.socket);
-        LOGGER.info("Remote control server is now stopped");
-        this.running = false;
     }
 
     @Nullable
@@ -149,7 +138,7 @@ public class ChaseServer {
             return null;
         }
         ServerPlayerEntity serverPlayerEntity = list.get(0);
-        String string = (String)ChaseCommand.DIMENSIONS.inverse().get(serverPlayerEntity.net_minecraft_server_world_ServerWorld_getWorld().getRegistryKey());
+        String string = (String) ChaseCommand.DIMENSIONS.inverse().get(serverPlayerEntity.net_minecraft_server_world_ServerWorld_getWorld().getRegistryKey());
         if (string == null) {
             return null;
         }
@@ -163,18 +152,20 @@ public class ChaseServer {
 
         @Override
         public final String toString() {
-            return ObjectMethods.bootstrap("toString", new MethodHandle[]{TeleportPos.class, "dimensionName;x;y;z;yRot;xRot", "dimensionName", "x", "y", "z", "yaw", "pitch"}, this);
+            return ObjectMethods.bootstrap("toString", new MethodHandle
+                    []{TeleportPos.class, "dimensionName;x;y;z;yRot;xRot", "dimensionName", "x", "y", "z", "yaw", "pitch"}, this);
         }
 
         @Override
         public final int hashCode() {
-            return (int)ObjectMethods.bootstrap("hashCode", new MethodHandle[]{TeleportPos.class, "dimensionName;x;y;z;yRot;xRot", "dimensionName", "x", "y", "z", "yaw", "pitch"}, this);
+            return (int) ObjectMethods.bootstrap("hashCode", new MethodHandle
+                            []{TeleportPos.class, "dimensionName;x;y;z;yRot;xRot", "dimensionName", "x", "y", "z", "yaw", "pitch"}, this);
         }
 
         @Override
         public final boolean equals(Object object) {
-            return (boolean)ObjectMethods.bootstrap("equals", new MethodHandle[]{TeleportPos.class, "dimensionName;x;y;z;yRot;xRot", "dimensionName", "x", "y", "z", "yaw", "pitch"}, this, object);
+            return (boolean) ObjectMethods.bootstrap("equals", new MethodHandle
+                            []{TeleportPos.class, "dimensionName;x;y;z;yRot;xRot", "dimensionName", "x", "y", "z", "yaw", "pitch"}, this, object);
         }
     }
 }
-

@@ -1,6 +1,6 @@
 /*
  * Decompiled with CFR 0.152.
- * 
+ *
  * Could not load the following classes:
  *  com.google.common.hash.Hashing
  *  com.google.common.hash.HashingOutputStream
@@ -38,11 +38,10 @@ import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-public class NbtProvider
-implements DataProvider {
-    final static private Logger LOGGER = LogUtils.getLogger();
-    final private Iterable<Path> paths;
-    final private DataOutput output;
+public class NbtProvider implements DataProvider {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private final Iterable<Path> paths;
+    private final DataOutput output;
 
     public NbtProvider(DataOutput output, Collection<Path> paths) {
         this.paths = paths;
@@ -56,26 +55,27 @@ implements DataProvider {
         for (Path path2 : this.paths) {
             list.add(CompletableFuture.supplyAsync(() -> {
                 CompletableFuture<Void> completableFuture;
-                block8: {
+                block8:
+                {
                     Stream<Path> stream = Files.walk(path2, new FileVisitOption[0]);
                     try {
-                        completableFuture = CompletableFuture.allOf((CompletableFuture[])stream.filter(path -> path.toString().endsWith(".nbt")).map(path -> CompletableFuture.runAsync(() -> NbtProvider.convertNbtToSnbt(writer, path, NbtProvider.getLocation(path2, path), path), Util.getIoWorkerExecutor())).toArray(CompletableFuture[]::new));
+                        completableFuture = CompletableFuture.allOf((CompletableFuture
+                                        []) stream.filter(path -> path.toString().endsWith(".nbt")).map(path -> CompletableFuture.runAsync(() -> NbtProvider.convertNbtToSnbt(writer, path, NbtProvider.getLocation(path2, path), path), Util.getIoWorkerExecutor())).toArray(CompletableFuture
+                                                []
+                                        ::new));
                         if (stream == null) break block8;
-                    }
-                    catch (Throwable throwable) {
+                    } catch (Throwable throwable) {
                         try {
                             if (stream != null) {
                                 try {
                                     stream.close();
-                                }
-                                catch (Throwable throwable2) {
+                                } catch (Throwable throwable2) {
                                     throwable.addSuppressed(throwable2);
                                 }
                             }
                             throw throwable;
-                        }
-                        catch (IOException iOException) {
-                            LOGGER.error("Failed to read structure input directory", (Throwable)iOException);
+                        } catch (IOException iOException) {
+                            LOGGER.error("Failed to read structure input directory", (Throwable) iOException);
                             return CompletableFuture.completedFuture(null);
                         }
                     }
@@ -84,7 +84,8 @@ implements DataProvider {
                 return completableFuture;
             }, Util.getMainWorkerExecutor().named("NbtToSnbt")).thenCompose(future -> future));
         }
-        return CompletableFuture.allOf((CompletableFuture[])list.toArray(CompletableFuture[]::new));
+        return CompletableFuture.allOf((CompletableFuture[]) list.toArray(CompletableFuture[]
+                        ::new));
     }
 
     @Override
@@ -102,59 +103,24 @@ implements DataProvider {
      */
     @Nullable
     public static Path convertNbtToSnbt(DataWriter writer, Path inputPath, String filename, Path outputPath) {
-        Path path;
-        FixedBufferInputStream inputStream2;
-        InputStream inputStream;
-        block13: {
-            inputStream = Files.newInputStream(inputPath, new OpenOption[0]);
-            inputStream2 = new FixedBufferInputStream(inputStream);
-            Path path2 = outputPath.resolve(filename + ".snbt");
-            NbtProvider.writeTo(writer, path2, NbtHelper.toNbtProviderString(NbtIo.readCompressed(inputStream2, NbtSizeTracker.ofUnlimitedBytes())));
-            LOGGER.info("Converted {} from NBT to SNBT", (Object)filename);
-            path = path2;
-            ((InputStream)inputStream2).close();
-            if (inputStream == null) break block13;
-            inputStream.close();
-        }
-        return path;
-        {
-            catch (Throwable throwable) {
-                try {
-                    try {
-                        try {
-                            ((InputStream)inputStream2).close();
-                        }
-                        catch (Throwable throwable2) {
-                            throwable.addSuppressed(throwable2);
-                        }
-                        throw throwable;
-                    }
-                    catch (Throwable throwable3) {
-                        if (inputStream != null) {
-                            try {
-                                inputStream.close();
-                            }
-                            catch (Throwable throwable4) {
-                                throwable3.addSuppressed(throwable4);
-                            }
-                        }
-                        throw throwable3;
-                    }
-                }
-                catch (IOException iOException) {
-                    LOGGER.error("Couldn't convert {} from NBT to SNBT at {}", new Object[]{filename, inputPath, iOException});
-                    return null;
-                }
-            }
+        Path path = outputPath.resolve(filename + ".snbt");
+        try (InputStream inputStream = Files.newInputStream(inputPath, new OpenOption[0]);
+                FixedBufferInputStream inputStream2 = new FixedBufferInputStream(inputStream)) {
+            NbtCompound nbt = NbtIo.readCompressed(inputStream2, NbtSizeTracker.ofUnlimitedBytes());
+            NbtProvider.writeTo(writer, path, NbtHelper.toNbtProviderString(nbt));
+            LOGGER.info("Converted {} from NBT to SNBT", filename);
+            return path;
+        } catch (IOException iOException) {
+            LOGGER.error("Couldn't convert {} from NBT to SNBT at {}", filename, inputPath, iOException);
+            return null;
         }
     }
 
     public static void writeTo(DataWriter writer, Path path, String content) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        HashingOutputStream hashingOutputStream = new HashingOutputStream(Hashing.sha1(), (OutputStream)byteArrayOutputStream);
+        HashingOutputStream hashingOutputStream = new HashingOutputStream(Hashing.sha1(), (OutputStream) byteArrayOutputStream);
         hashingOutputStream.write(content.getBytes(StandardCharsets.UTF_8));
         hashingOutputStream.write(10);
         writer.write(path, byteArrayOutputStream.toByteArray(), hashingOutputStream.hash());
     }
 }
-

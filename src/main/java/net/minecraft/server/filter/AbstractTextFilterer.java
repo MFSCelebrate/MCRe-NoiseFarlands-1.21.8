@@ -1,6 +1,6 @@
 /*
  * Decompiled with CFR 0.152.
- * 
+ *
  * Could not load the following classes:
  *  com.google.common.collect.ImmutableList
  *  com.google.gson.JsonArray
@@ -55,17 +55,16 @@ import net.minecraft.util.thread.SimpleConsecutiveExecutor;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-public abstract class AbstractTextFilterer
-implements AutoCloseable {
-    final static protected Logger LOGGER = LogUtils.getLogger();
-    final static private AtomicInteger WORKER_ID = new AtomicInteger(1);
-    final static private ThreadFactory THREAD_FACTORY = runnable -> {
+public abstract class AbstractTextFilterer implements AutoCloseable {
+    protected static final Logger LOGGER = LogUtils.getLogger();
+    private static final AtomicInteger WORKER_ID = new AtomicInteger(1);
+    private static final ThreadFactory THREAD_FACTORY = runnable -> {
         Thread thread = new Thread(runnable);
         thread.setName("Chat-Filter-Worker-" + WORKER_ID.getAndIncrement());
         return thread;
     };
-    final private URL url;
-    final private MessageEncoder messageEncoder;
+    private final URL url;
+    private final MessageEncoder messageEncoder;
     final HashIgnorer hashIgnorer;
     final ExecutorService threadPool;
 
@@ -80,12 +79,15 @@ implements AutoCloseable {
         this.messageEncoder = messageEncoder;
     }
 
-    protected static URL resolveEndpoint(URI uri, @Nullable JsonObject endpoints, String key, String defaultPath) throws MalformedURLException {
+    protected static URL resolveEndpoint(URI uri, @Nullable
+                    JsonObject endpoints, String key, String defaultPath)
+            throws MalformedURLException {
         String string = AbstractTextFilterer.getEndpointPath(endpoints, key, defaultPath);
         return uri.resolve("/" + string).toURL();
     }
 
-    protected static String getEndpointPath(@Nullable JsonObject endpoints, String key, String defaultPath) {
+    protected static String getEndpointPath(@Nullable
+                    JsonObject endpoints, String key, String defaultPath) {
         return endpoints != null ? JsonHelper.getString(endpoints, key, defaultPath) : defaultPath;
     }
 
@@ -105,7 +107,8 @@ implements AutoCloseable {
         };
     }
 
-    protected CompletableFuture<FilteredMessage> filter(GameProfile profile, String raw, HashIgnorer hashIgnorer, Executor executor) {
+    protected CompletableFuture<
+                    FilteredMessage> filter(GameProfile profile, String raw, HashIgnorer hashIgnorer, Executor executor) {
         if (raw.isEmpty()) {
             return CompletableFuture.completedFuture(FilteredMessage.EMPTY);
         }
@@ -114,9 +117,8 @@ implements AutoCloseable {
             try {
                 JsonObject jsonObject2 = this.request(jsonObject, this.url);
                 return this.filter(raw, hashIgnorer, jsonObject2);
-            }
-            catch (Exception exception) {
-                LOGGER.warn("Failed to validate message '{}'", (Object)raw, (Object)exception);
+            } catch (Exception exception) {
+                LOGGER.warn("Failed to validate message '{}'", (Object) raw, (Object) exception);
                 return FilteredMessage.censored(raw);
             }
         }, executor);
@@ -145,8 +147,7 @@ implements AutoCloseable {
 
     protected void discardRestOfInput(InputStream stream) throws IOException {
         byte[] bs = new byte[1024];
-        while (stream.read(bs) != -1) {
-        }
+        while (stream.read(bs) != -1) {}
     }
 
     /*
@@ -156,49 +157,23 @@ implements AutoCloseable {
      * Enabled aggressive exception aggregation
      */
     private JsonObject request(JsonObject request, URL url) throws IOException {
-        JsonObject jsonObject;
-        InputStream inputStream;
-        block8: {
-            HttpURLConnection httpURLConnection = this.openConnection(request, url);
-            inputStream = httpURLConnection.getInputStream();
-            if (httpURLConnection.getResponseCode() != 204) break block8;
-            JsonObject jsonObject2 = new JsonObject();
-            if (inputStream == null) return jsonObject2;
-            {
-                catch (Throwable throwable) {
-                    if (inputStream == null) throw throwable;
-                    try {
-                        inputStream.close();
-                        throw throwable;
-                    }
-                    catch (Throwable throwable2) {
-                        throwable.addSuppressed(throwable2);
-                    }
-                    throw throwable;
-                }
+        HttpURLConnection httpURLConnection = this.openConnection(request, url);
+        try (InputStream inputStream = httpURLConnection.getInputStream()) {
+            if (httpURLConnection.getResponseCode() == 204) {
+                return new JsonObject();
             }
-            inputStream.close();
-            return jsonObject2;
+            try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                return LenientJsonParser.parse(reader).getAsJsonObject();
+            }
         }
-        try {
-            jsonObject = LenientJsonParser.parse(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).getAsJsonObject();
-        }
-        catch (Throwable throwable) {
-            this.discardRestOfInput(inputStream);
-            throw throwable;
-        }
-        this.discardRestOfInput(inputStream);
-        if (inputStream == null) return jsonObject;
-        inputStream.close();
-        return jsonObject;
     }
 
     protected HttpURLConnection openConnection(JsonObject request, URL url) throws IOException {
         HttpURLConnection httpURLConnection = this.openConnection(url);
         this.addAuthentication(httpURLConnection);
         try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(httpURLConnection.getOutputStream(), StandardCharsets.UTF_8);
-             JsonWriter jsonWriter = new JsonWriter((Writer)outputStreamWriter);){
-            Streams.write((JsonElement)request, (JsonWriter)jsonWriter);
+                JsonWriter jsonWriter = new JsonWriter((Writer) outputStreamWriter); ) {
+            Streams.write((JsonElement) request, (JsonWriter) jsonWriter);
         }
         int i = httpURLConnection.getResponseCode();
         if (i < 200 || i >= 300) {
@@ -214,7 +189,7 @@ implements AutoCloseable {
     }
 
     protected HttpURLConnection openConnection(URL url) throws IOException {
-        HttpURLConnection httpURLConnection = (HttpURLConnection)url.openConnection();
+        HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
         httpURLConnection.setConnectTimeout(15000);
         httpURLConnection.setReadTimeout(this.getReadTimeout());
         httpURLConnection.setUseCaches(false);
@@ -233,8 +208,8 @@ implements AutoCloseable {
 
     @FunctionalInterface
     public static interface HashIgnorer {
-        final static public HashIgnorer NEVER_IGNORE = (hashes, hashesSize) -> false;
-        final static public HashIgnorer IGNORE_IF_MATCHES_ALL = (hashes, hashesSize) -> hashes.length() == hashesSize;
+        public static final HashIgnorer NEVER_IGNORE = (hashes, hashesSize) -> false;
+        public static final HashIgnorer IGNORE_IF_MATCHES_ALL = (hashes, hashesSize) -> hashes.length() == hashesSize;
 
         public static HashIgnorer internalDropHashes(int hashesToDrop) {
             return (hashes, hashesSize) -> hashesSize >= hashesToDrop;
@@ -256,17 +231,15 @@ implements AutoCloseable {
         public JsonObject encode(GameProfile var1, String var2);
     }
 
-    protected static class FailedHttpRequestException
-    extends RuntimeException {
+    protected static class FailedHttpRequestException extends RuntimeException {
         protected FailedHttpRequestException(String message) {
             super(message);
         }
     }
 
-    protected class StreamImpl
-    implements TextStream {
-        final protected GameProfile gameProfile;
-        final protected Executor executor;
+    protected class StreamImpl implements TextStream {
+        protected final GameProfile gameProfile;
+        protected final Executor executor;
 
         protected StreamImpl(GameProfile gameProfile) {
             this.gameProfile = gameProfile;
@@ -276,7 +249,7 @@ implements AutoCloseable {
 
         @Override
         public CompletableFuture<List<FilteredMessage>> filterTexts(List<String> texts) {
-            List list = (List)texts.stream().map(text -> AbstractTextFilterer.this.filter(this.gameProfile, (String)text, AbstractTextFilterer.this.hashIgnorer, this.executor)).collect(ImmutableList.toImmutableList());
+            List list = (List) texts.stream().map(text -> AbstractTextFilterer.this.filter(this.gameProfile, (String) text, AbstractTextFilterer.this.hashIgnorer, this.executor)).collect(ImmutableList.toImmutableList());
             return Util.combine(list).exceptionally(throwable -> ImmutableList.of());
         }
 
@@ -286,4 +259,3 @@ implements AutoCloseable {
         }
     }
 }
-

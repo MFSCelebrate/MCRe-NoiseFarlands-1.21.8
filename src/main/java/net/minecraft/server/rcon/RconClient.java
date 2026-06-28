@@ -1,6 +1,6 @@
 /*
  * Decompiled with CFR 0.152.
- * 
+ *
  * Could not load the following classes:
  *  com.mojang.logging.LogUtils
  *  org.slf4j.Logger
@@ -20,19 +20,18 @@ import net.minecraft.server.rcon.BufferHelper;
 import net.minecraft.server.rcon.RconBase;
 import org.slf4j.Logger;
 
-public class RconClient
-extends RconBase {
-    final static private Logger LOGGER = LogUtils.getLogger();
-    final static private int field_29799 = 3;
-    final static private int field_29800 = 2;
-    final static private int field_29801 = 0;
-    final static private int field_29802 = 2;
-    final static private int field_29803 = -1;
+public class RconClient extends RconBase {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final int field_29799 = 3;
+    private static final int field_29800 = 2;
+    private static final int field_29801 = 0;
+    private static final int field_29802 = 2;
+    private static final int field_29803 = -1;
     private boolean authenticated;
-    final private Socket socket;
-    final private byte[] packetBuffer = new byte[1460];
-    final private String password;
-    final private DedicatedServer server;
+    private final Socket socket;
+    private final byte[] packetBuffer = new byte[1460];
+    private final String password;
+    private final DedicatedServer server;
 
     RconClient(DedicatedServer server, String password, Socket socket) {
         super("RCON Client " + String.valueOf(socket.getInetAddress()));
@@ -40,8 +39,7 @@ extends RconBase {
         this.socket = socket;
         try {
             this.socket.setSoTimeout(0);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
             this.running = false;
         }
         this.password = password;
@@ -53,90 +51,69 @@ extends RconBase {
      */
     @Override
     public void run() {
-        block18: {
-            block13: while (true) {
-                int j;
-                int i;
-                block17: {
-                    block16: {
-                        if (!this.running) break;
-                        BufferedInputStream bufferedInputStream = new BufferedInputStream(this.socket.getInputStream());
-                        i = bufferedInputStream.read(this.packetBuffer, 0, 1460);
-                        if (10 <= i) break block16;
-                        this.close();
-                        LOGGER.info("Thread {} shutting down", (Object)this.description);
-                        this.running = false;
-                        return;
-                    }
-                    j = 0;
-                    int k = BufferHelper.getIntLE(this.packetBuffer, 0, i);
-                    if (k == i - 4) break block17;
+        try {
+            while (this.running) {
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(this.socket.getInputStream());
+                int i = bufferedInputStream.read(this.packetBuffer, 0, 1460);
+                if (i < 10) {
                     this.close();
-                    LOGGER.info("Thread {} shutting down", (Object)this.description);
+                    LOGGER.info("Thread {} shutting down", this.description);
                     this.running = false;
                     return;
                 }
-                int l = BufferHelper.getIntLE(this.packetBuffer, j += 4, i);
-                int m = BufferHelper.getIntLE(this.packetBuffer, j += 4);
+                int j = 0;
+                int len = BufferHelper.getIntLE(this.packetBuffer, 0, i);
+                if (len != i - 4) {
+                    this.close();
+                    LOGGER.info("Thread {} shutting down", this.description);
+                    this.running = false;
+                    return;
+                }
+                int sessionId = BufferHelper.getIntLE(this.packetBuffer, j += 4, i);
+                int type = BufferHelper.getIntLE(this.packetBuffer, j += 4);
                 j += 4;
-                switch (m) {
-                    case 3: {
-                        String string = BufferHelper.getString(this.packetBuffer, j, i);
-                        j += string.length();
-                        if (!string.isEmpty() && string.equals(this.password)) {
-                            this.authenticated = true;
-                            this.respond(l, 2, "");
+                switch (type) {
+                    case 3:
+                        {
+                            String pass = BufferHelper.getString(this.packetBuffer, j, i);
+                            j += pass.length();
+                            if (!pass.isEmpty() && pass.equals(this.password)) {
+                                this.authenticated = true;
+                                this.respond(sessionId, 2, "");
+                            } else {
+                                this.authenticated = false;
+                                this.fail();
+                            }
                             break;
                         }
-                        this.authenticated = false;
-                        this.fail();
-                        break;
-                    }
-                    case 2: {
-                        if (this.authenticated) {
-                            String string2 = BufferHelper.getString(this.packetBuffer, j, i);
-                            try {
-                                this.respond(l, this.server.executeRconCommand(string2));
+                    case 2:
+                        {
+                            if (this.authenticated) {
+                                String cmd = BufferHelper.getString(this.packetBuffer, j, i);
+                                try {
+                                    this.respond(sessionId, this.server.executeRconCommand(cmd));
+                                } catch (Exception e) {
+                                    this.respond(sessionId, "Error executing: " + cmd + " (" + e.getMessage() + ")");
+                                }
+                            } else {
+                                this.fail();
                             }
-                            catch (Exception exception) {
-                                this.respond(l, "Error executing: " + string2 + " (" + exception.getMessage() + ")");
-                            }
-                            continue block13;
+                            break;
                         }
-                        this.fail();
-                        break;
-                    }
-                    default: {
-                        this.respond(l, String.format(Locale.ROOT, "Unknown request %s", Integer.toHexString(m)));
-                    }
+                    default:
+                        {
+                            this.respond(sessionId, String.format(Locale.ROOT, "Unknown request %s", Integer.toHexString(type)));
+                        }
                 }
-                continue;
-                break;
             }
+        } catch (IOException e) {
+            // 已处理
+        } catch (Exception e) {
+            LOGGER.error("Exception whilst parsing RCON input", e);
+        } finally {
             this.close();
-            LOGGER.info("Thread {} shutting down", (Object)this.description);
+            LOGGER.info("Thread {} shutting down", this.description);
             this.running = false;
-            break block18;
-            catch (IOException bufferedInputStream) {
-                this.close();
-                LOGGER.info("Thread {} shutting down", (Object)this.description);
-                this.running = false;
-                break block18;
-            }
-            catch (Exception exception2) {
-                try {
-                    LOGGER.error("Exception whilst parsing RCON input", (Throwable)exception2);
-                    this.close();
-                }
-                catch (Throwable throwable) {
-                    this.close();
-                    LOGGER.info("Thread {} shutting down", (Object)this.description);
-                    this.running = false;
-                    throw throwable;
-                }
-                LOGGER.info("Thread {} shutting down", (Object)this.description);
-                this.running = false;
-            }
         }
     }
 
@@ -176,10 +153,8 @@ extends RconBase {
     private void close() {
         try {
             this.socket.close();
-        }
-        catch (IOException iOException) {
-            LOGGER.warn("Failed to close socket", (Throwable)iOException);
+        } catch (IOException iOException) {
+            LOGGER.warn("Failed to close socket", (Throwable) iOException);
         }
     }
 }
-

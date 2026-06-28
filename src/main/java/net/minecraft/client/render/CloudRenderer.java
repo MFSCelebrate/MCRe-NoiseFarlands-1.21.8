@@ -1,6 +1,6 @@
 /*
  * Decompiled with CFR 0.152.
- * 
+ *
  * Could not load the following classes:
  *  com.mojang.logging.LogUtils
  *  net.fabricmc.api.EnvType
@@ -59,49 +59,41 @@ import org.joml.Vector4f;
 import org.joml.Vector4fc;
 import org.slf4j.Logger;
 
-@Environment(value=EnvType.CLIENT)
-public class CloudRenderer
-extends SinglePreparationResourceReloader<Optional<CloudCells>>
-implements AutoCloseable {
-    final static private int field_60075 = 16;
-    final static private int field_60076 = 32;
-    final static private int field_60319 = 128;
-    final static private float field_53043 = 12.0f;
-    final static private int UBO_SIZE = new Std140SizeCalculator().putVec4().putVec3().putVec3().get();
-    final static private Logger LOGGER = LogUtils.getLogger();
-    final static private Identifier CLOUD_TEXTURE = Identifier.ofVanilla("textures/environment/clouds.png");
-    final static private float field_53045 = 0.6f;
-    final static private long field_53046 = 0L;
-    final static private int field_53047 = 4;
-    final static private int field_53048 = 3;
-    final static private int field_53049 = 2;
-    final static private int field_53050 = 1;
-    final static private int field_53051 = 0;
+@Environment(value = EnvType.CLIENT)
+public class CloudRenderer extends SinglePreparationResourceReloader<Optional<CloudCells>>
+        implements AutoCloseable {
+    private static final int field_60075 = 16;
+    private static final int field_60076 = 32;
+    private static final int field_60319 = 128;
+    private static final float field_53043 = 12.0f;
+    private static final int UBO_SIZE = new Std140SizeCalculator().putVec4().putVec3().putVec3().get();
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Identifier CLOUD_TEXTURE = Identifier.ofVanilla("textures/environment/clouds.png");
+    private static final float field_53045 = 0.6f;
+    private static final long field_53046 = 0L;
+    private static final int field_53047 = 4;
+    private static final int field_53048 = 3;
+    private static final int field_53049 = 2;
+    private static final int field_53050 = 1;
+    private static final int field_53051 = 0;
     private boolean rebuild = true;
     private int centerX = Integer.MIN_VALUE;
     private int centerZ = Integer.MIN_VALUE;
     private ViewMode viewMode = ViewMode.INSIDE_CLOUDS;
-    @Nullable
-    private CloudRenderMode renderMode;
-    @Nullable
-    private CloudCells cells;
+    @Nullable private CloudRenderMode renderMode;
+    @Nullable private CloudCells cells;
     private int instanceCount = 0;
-    final private RenderSystem.ShapeIndexBuffer indexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.DrawMode.QUADS);
-    final private MappableRingBuffer cloudInfoBuffer = new MappableRingBuffer(() -> "Cloud UBO", 130, UBO_SIZE);
-    @Nullable
-    private MappableRingBuffer cloudFacesBuffer;
+    private final RenderSystem.ShapeIndexBuffer indexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.DrawMode.QUADS);
+    private final MappableRingBuffer cloudInfoBuffer = new MappableRingBuffer(() -> "Cloud UBO", 130, UBO_SIZE);
+    @Nullable private MappableRingBuffer cloudFacesBuffer;
 
     /*
      * Loose catch block
      */
     @Override
     protected Optional<CloudCells> prepare(ResourceManager resourceManager, Profiler profiler) {
-        Optional<CloudCells> optional;
-        NativeImage nativeImage;
-        InputStream inputStream;
-        block18: {
-            inputStream = resourceManager.open(CLOUD_TEXTURE);
-            nativeImage = NativeImage.read(inputStream);
+        try (InputStream inputStream = resourceManager.open(CLOUD_TEXTURE);
+                NativeImage nativeImage = NativeImage.read(inputStream)) {
             int i = nativeImage.getWidth();
             int j = nativeImage.getHeight();
             long[] ls = new long[i * j];
@@ -119,45 +111,10 @@ implements AutoCloseable {
                     ls[l + k * i] = CloudRenderer.packCloudCell(m, bl, bl2, bl3, bl4);
                 }
             }
-            optional = Optional.of(new CloudCells(ls, i, j));
-            if (nativeImage != null) {
-                nativeImage.close();
-            }
-            if (inputStream == null) break block18;
-            inputStream.close();
-        }
-        return optional;
-        {
-            catch (Throwable throwable) {
-                try {
-                    try {
-                        if (nativeImage != null) {
-                            try {
-                                nativeImage.close();
-                            }
-                            catch (Throwable throwable2) {
-                                throwable.addSuppressed(throwable2);
-                            }
-                        }
-                        throw throwable;
-                    }
-                    catch (Throwable throwable3) {
-                        if (inputStream != null) {
-                            try {
-                                inputStream.close();
-                            }
-                            catch (Throwable throwable4) {
-                                throwable3.addSuppressed(throwable4);
-                            }
-                        }
-                        throw throwable3;
-                    }
-                }
-                catch (IOException iOException) {
-                    LOGGER.error("Failed to load cloud texture", (Throwable)iOException);
-                    return Optional.empty();
-                }
-            }
+            return Optional.of(new CloudCells(ls, i, j));
+        } catch (IOException iOException) {
+            LOGGER.error("Failed to load cloud texture", iOException);
+            return Optional.empty();
         }
     }
 
@@ -169,7 +126,8 @@ implements AutoCloseable {
     }
 
     @Override
-    protected void apply(Optional<CloudCells> optional, ResourceManager resourceManager, Profiler profiler) {
+    protected void apply(Optional<
+                    CloudCells> optional, ResourceManager resourceManager, Profiler profiler) {
         this.cells = optional.orElse(null);
         this.rebuild = true;
     }
@@ -179,7 +137,7 @@ implements AutoCloseable {
     }
 
     private static long packCloudCell(int color, boolean borderNorth, boolean borderEast, boolean borderSouth, boolean borderWest) {
-        return (long)color << 4 | (long)((borderNorth ? 1 : 0) << 3) | (long)((borderEast ? 1 : 0) << 2) | (long)((borderSouth ? 1 : 0) << 1) | (long)((borderWest ? 1 : 0) << 0);
+        return (long) color << 4 | (long) ((borderNorth ? 1 : 0) << 3) | (long) ((borderEast ? 1 : 0) << 2) | (long) ((borderSouth ? 1 : 0) << 1) | (long) ((borderWest ? 1 : 0) << 0);
     }
 
     private static boolean hasBorderNorth(long packed) {
@@ -209,7 +167,7 @@ implements AutoCloseable {
             return;
         }
         int i = Math.min(MinecraftClient.getInstance().options.getCloudRenderDistance().getValue(), 128) * 16;
-        int j = MathHelper.ceil((float)i / 12.0f);
+        int j = MathHelper.ceil((float) i / 12.0f);
         int k = CloudRenderer.calcCloudBufferSize(j);
         if (this.cloudFacesBuffer == null || this.cloudFacesBuffer.getBlocking().size() != k) {
             if (this.cloudFacesBuffer != null) {
@@ -217,17 +175,17 @@ implements AutoCloseable {
             }
             this.cloudFacesBuffer = new MappableRingBuffer(() -> "Cloud UTB", 258, k);
         }
-        ViewMode viewMode = (g = (f = (float)((double)cloudHeight - cameraPos.y)) + 4.0f) < 0.0f ? ViewMode.ABOVE_CLOUDS : (f > 0.0f ? ViewMode.BELOW_CLOUDS : ViewMode.INSIDE_CLOUDS);
-        double d = cameraPos.x + (double)(cloudPhase * 0.030000001f);
-        double e = cameraPos.z + (double)3.96f;
-        double h = (double)this.cells.width * 12.0;
-        double l = (double)this.cells.height * 12.0;
-        d -= (double)MathHelper.floor(d / h) * h;
-        e -= (double)MathHelper.floor(e / l) * l;
+        ViewMode viewMode = (g = (f = (float) ((double) cloudHeight - cameraPos.y)) + 4.0f) < 0.0f ? ViewMode.ABOVE_CLOUDS : (f > 0.0f ? ViewMode.BELOW_CLOUDS : ViewMode.INSIDE_CLOUDS);
+        double d = cameraPos.x + (double) (cloudPhase * 0.030000001f);
+        double e = cameraPos.z + (double) 3.96f;
+        double h = (double) this.cells.width * 12.0;
+        double l = (double) this.cells.height * 12.0;
+        d -= (double) MathHelper.floor(d / h) * h;
+        e -= (double) MathHelper.floor(e / l) * l;
         int m = MathHelper.floor(d / 12.0);
         int n = MathHelper.floor(e / 12.0);
-        float o = (float)(d - (double)((float)m * 12.0f));
-        float p = (float)(e - (double)((float)n * 12.0f));
+        float o = (float) (d - (double) ((float) m * 12.0f));
+        float p = (float) (e - (double) ((float) n * 12.0f));
         boolean bl = mode == CloudRenderMode.FANCY;
         RenderPipeline renderPipeline2 = renderPipeline = bl ? RenderPipelines.CLOUDS : RenderPipelines.FLAT_CLOUDS;
         if (this.rebuild || m != this.centerX || n != this.centerZ || viewMode != this.viewMode || mode != this.renderMode) {
@@ -244,13 +202,11 @@ implements AutoCloseable {
                 if (mappedView != null) {
                     mappedView.close();
                 }
-            }
-            catch (Throwable throwable) {
+            } catch (Throwable throwable) {
                 if (mappedView != null) {
                     try {
                         mappedView.close();
-                    }
-                    catch (Throwable throwable2) {
+                    } catch (Throwable throwable2) {
                         throwable.addSuppressed(throwable2);
                     }
                 }
@@ -266,19 +222,17 @@ implements AutoCloseable {
             if (mappedView != null) {
                 mappedView.close();
             }
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
             if (mappedView != null) {
                 try {
                     mappedView.close();
-                }
-                catch (Throwable throwable3) {
+                } catch (Throwable throwable3) {
                     throwable.addSuppressed(throwable3);
                 }
             }
             throw throwable;
         }
-        GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().write((Matrix4fc)RenderSystem.getModelViewMatrix(), (Vector4fc)new Vector4f(1.0f, 1.0f, 1.0f, 1.0f), (Vector3fc)new Vector3f(), (Matrix4fc)new Matrix4f(), 0.0f);
+        GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().write((Matrix4fc) RenderSystem.getModelViewMatrix(), (Vector4fc) new Vector4f(1.0f, 1.0f, 1.0f, 1.0f), (Vector3fc) new Vector3f(), (Matrix4fc) new Matrix4f(), 0.0f);
         Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
         Framebuffer framebuffer2 = MinecraftClient.getInstance().worldRenderer.getCloudsFramebuffer();
         RenderSystem.ShapeIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.DrawMode.QUADS);
@@ -304,13 +258,11 @@ implements AutoCloseable {
             if (renderPass != null) {
                 renderPass.close();
             }
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
             if (renderPass != null) {
                 try {
                     renderPass.close();
-                }
-                catch (Throwable throwable4) {
+                } catch (Throwable throwable4) {
                     throwable.addSuppressed(throwable4);
                 }
             }
@@ -337,7 +289,8 @@ implements AutoCloseable {
         }
     }
 
-    private void method_72155(ViewMode viewMode, ByteBuffer byteBuffer, int i, int j, boolean bl, int k, int l, int m, int n, long[] ls) {
+    private void method_72155(ViewMode viewMode, ByteBuffer byteBuffer, int i, int j, boolean bl, int k, int l, int m, int n, long
+                    [] ls) {
         int p;
         int o = Math.floorMod(1 + k, l);
         long q = ls[o + (p = Math.floorMod(j + m, n)) * l];
@@ -358,7 +311,7 @@ implements AutoCloseable {
     private void method_71098(ByteBuffer byteBuffer, int i, int j, Direction direction, int k) {
         int l = direction.getIndex() | k;
         l |= (i & 1) << 7;
-        byteBuffer.put((byte)(i >> 1)).put((byte)(j >> 1)).put((byte)(l |= (j & 1) << 6));
+        byteBuffer.put((byte) (i >> 1)).put((byte) (j >> 1)).put((byte) (l |= (j & 1) << 6));
     }
 
     private void buildCloudCellFancy(ViewMode viewMode, ByteBuffer byteBuffer, int i, int j, long l) {
@@ -410,16 +363,15 @@ implements AutoCloseable {
         return this.prepare(manager, profiler);
     }
 
-    @Environment(value=EnvType.CLIENT)
-    static final class ViewMode
-    extends Enum<ViewMode> {
-        final static public ViewMode ABOVE_CLOUDS = new ViewMode();
-        final static public ViewMode INSIDE_CLOUDS = new ViewMode();
-        final static public ViewMode BELOW_CLOUDS = new ViewMode();
-        final static private ViewMode[] field_53063;
+    @Environment(value = EnvType.CLIENT)
+    static final class ViewMode extends Enum<ViewMode> {
+        public static final ViewMode ABOVE_CLOUDS = new ViewMode();
+        public static final ViewMode INSIDE_CLOUDS = new ViewMode();
+        public static final ViewMode BELOW_CLOUDS = new ViewMode();
+        private static final ViewMode[] field_53063;
 
         public static ViewMode[] values() {
-            return (ViewMode[])field_53063.clone();
+            return (ViewMode[]) field_53063.clone();
         }
 
         public static ViewMode valueOf(String string) {
@@ -435,9 +387,8 @@ implements AutoCloseable {
         }
     }
 
-    @Environment(value=EnvType.CLIENT)
-    public static final class CloudCells
-    extends Record {
+    @Environment(value = EnvType.CLIENT)
+    public static final class CloudCells extends Record {
         final long[] cells;
         final int width;
         final int height;
@@ -450,17 +401,20 @@ implements AutoCloseable {
 
         @Override
         public final String toString() {
-            return ObjectMethods.bootstrap("toString", new MethodHandle[]{CloudCells.class, "cells;width;height", "cells", "width", "height"}, this);
+            return ObjectMethods.bootstrap("toString", new MethodHandle
+                    []{CloudCells.class, "cells;width;height", "cells", "width", "height"}, this);
         }
 
         @Override
         public final int hashCode() {
-            return (int)ObjectMethods.bootstrap("hashCode", new MethodHandle[]{CloudCells.class, "cells;width;height", "cells", "width", "height"}, this);
+            return (int) ObjectMethods.bootstrap("hashCode", new MethodHandle
+                            []{CloudCells.class, "cells;width;height", "cells", "width", "height"}, this);
         }
 
         @Override
         public final boolean equals(Object object) {
-            return (boolean)ObjectMethods.bootstrap("equals", new MethodHandle[]{CloudCells.class, "cells;width;height", "cells", "width", "height"}, this, object);
+            return (boolean) ObjectMethods.bootstrap("equals", new MethodHandle
+                            []{CloudCells.class, "cells;width;height", "cells", "width", "height"}, this, object);
         }
 
         public long[] cells() {
@@ -476,4 +430,3 @@ implements AutoCloseable {
         }
     }
 }
-
