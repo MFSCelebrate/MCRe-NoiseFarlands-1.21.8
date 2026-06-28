@@ -22,6 +22,10 @@ jobs:
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
+      # ========== 新增：自动修复 Record 类 ==========
+      - name: 修复 Record 类（删除 extends Record）
+        run: find src/main/java -name "*.java" -exec sed -i 's/ extends Record//g' {} \;
+
       - name: 构建完整核心
         run: ./gradlew compileJava --no-daemon
 
