@@ -1,0 +1,71 @@
+plugins {
+    id 'java'
+    id 'fabric-loom' version '1.15-SNAPSHOT'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    
+    // Yarn 源码中可能用到的注解库
+    compileOnly 'org.jspecify:jspecify:1.0.0'
+    compileOnly 'javax.annotation:javax.annotation-api:1.3.2'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+// ========== 全量编译所有源码 ==========
+sourceSets {
+    main {
+        java {
+            include '**/*.java'  // 编译所有
+        }
+        resources {
+            srcDirs 'src/main/resources'
+        }
+    }
+}
+
+// ========== 解除错误数量限制 ==========
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xmaxerrs' << '10000'
+    options.compilerArgs << '-Xmaxwarns' << '10000'
+    options.encoding = 'UTF-8'
+}
+
+// ========== 构建完整核心 ==========
+task buildFullJar(type: Jar) {
+    dependsOn compileJava
+    
+    // 1. 从 src/main/resources/ 复制所有资源
+    from 'src/main/resources'
+    
+    // 2. 从编译产物中提取所有 class
+    from sourceSets.main.output
+    
+    // 3. 删除签名文件
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+    
+    archiveBaseName.set('minecraft')
+    archiveVersion.set(project.minecraft_version)
+    archiveClassifier.set('custom')
+    
+    manifest {
+        attributes 'Main-Class': 'net.minecraft.client.main.Main'
+    }
+    
+    destinationDirectory.set(file('build/libs'))
+}
+
+tasks.build {
+    dependsOn tasks.buildFullJar
+}

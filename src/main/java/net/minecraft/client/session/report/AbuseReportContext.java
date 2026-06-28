@@ -1,0 +1,88 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  com.mojang.authlib.minecraft.UserApiService
+ *  net.fabricmc.api.EnvType
+ *  net.fabricmc.api.Environment
+ *  org.jetbrains.annotations.Nullable
+ */
+package net.minecraft.client.session.report;
+
+import com.mojang.authlib.minecraft.UserApiService;
+import java.util.Objects;
+import java.util.UUID;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ConfirmScreen;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.session.report.AbuseReport;
+import net.minecraft.client.session.report.AbuseReportSender;
+import net.minecraft.client.session.report.ReporterEnvironment;
+import net.minecraft.client.session.report.log.ChatLog;
+import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
+
+@Environment(value=EnvType.CLIENT)
+public final class AbuseReportContext {
+    final static private int MAX_LOGS = 1024;
+    final private AbuseReportSender sender;
+    final private ReporterEnvironment environment;
+    final private ChatLog chatLog;
+    @Nullable
+    private AbuseReport draft;
+
+    public AbuseReportContext(AbuseReportSender sender, ReporterEnvironment environment, ChatLog chatLog) {
+        this.sender = sender;
+        this.environment = environment;
+        this.chatLog = chatLog;
+    }
+
+    public static AbuseReportContext create(ReporterEnvironment environment, UserApiService userApiService) {
+        ChatLog chatLog = new ChatLog(1024);
+        AbuseReportSender abuseReportSender = AbuseReportSender.create(environment, userApiService);
+        return new AbuseReportContext(abuseReportSender, environment, chatLog);
+    }
+
+    public void tryShowDraftScreen(MinecraftClient client, Screen parent, Runnable callback, boolean quit) {
+        if (this.draft != null) {
+            AbuseReport abuseReport = this.draft.net_minecraft_client_session_report_AbuseReport_copy();
+            client.setScreen(new ConfirmScreen(confirmed -> {
+                this.setDraft(null);
+                if (confirmed) {
+                    client.setScreen(abuseReport.createReportScreen(parent, this));
+                } else {
+                    callback.run();
+                }
+            }, Text.translatable(quit ? "gui.abuseReport.draft.quittotitle.title" : "gui.abuseReport.draft.title"), Text.translatable(quit ? "gui.abuseReport.draft.quittotitle.content" : "gui.abuseReport.draft.content"), Text.translatable("gui.abuseReport.draft.edit"), Text.translatable("gui.abuseReport.draft.discard")));
+        } else {
+            callback.run();
+        }
+    }
+
+    public AbuseReportSender getSender() {
+        return this.sender;
+    }
+
+    public ChatLog getChatLog() {
+        return this.chatLog;
+    }
+
+    public boolean environmentEquals(ReporterEnvironment environment) {
+        return Objects.equals(this.environment, environment);
+    }
+
+    public void setDraft(@Nullable AbuseReport draft) {
+        this.draft = draft;
+    }
+
+    public boolean hasDraft() {
+        return this.draft != null;
+    }
+
+    public boolean draftPlayerUuidEquals(UUID uuid) {
+        return this.hasDraft() && this.draft.playerUuidEquals(uuid);
+    }
+}
+

@@ -1,0 +1,61 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  net.fabricmc.api.EnvType
+ *  net.fabricmc.api.Environment
+ */
+package net.minecraft.client.realms.task;
+
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.network.ServerAddress;
+import net.minecraft.client.realms.RealmsConnection;
+import net.minecraft.client.realms.dto.RealmsServer;
+import net.minecraft.client.realms.dto.RealmsServerAddress;
+import net.minecraft.client.realms.task.LongRunningTask;
+import net.minecraft.text.Text;
+
+@Environment(value=EnvType.CLIENT)
+public class RealmsConnectTask
+extends LongRunningTask {
+    final static private Text TITLE = Text.translatable("mco.connect.connecting");
+    final private RealmsConnection realmsConnection;
+    final private RealmsServer server;
+    final private RealmsServerAddress address;
+
+    public RealmsConnectTask(Screen lastScreen, RealmsServer server, RealmsServerAddress address) {
+        this.server = server;
+        this.address = address;
+        this.realmsConnection = new RealmsConnection(lastScreen);
+    }
+
+    @Override
+    public void run() {
+        if (this.address.address() != null) {
+            this.realmsConnection.connect(this.server, ServerAddress.parse(this.address.address()));
+        } else {
+            this.abortTask();
+        }
+    }
+
+    @Override
+    public void abortTask() {
+        super.abortTask();
+        this.realmsConnection.abort();
+        MinecraftClient.getInstance().getServerResourcePackProvider().clear();
+    }
+
+    @Override
+    public void tick() {
+        this.realmsConnection.tick();
+    }
+
+    @Override
+    public Text getTitle() {
+        return TITLE;
+    }
+}
+
