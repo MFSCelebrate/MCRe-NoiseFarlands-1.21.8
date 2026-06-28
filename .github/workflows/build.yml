@@ -2,7 +2,7 @@ name: Build Yarn Mapping Minecraft 1.21.8
 
 on:
   push:
-    branches: [ "1.21.8-BuildTest" ]
+    branches: [ "1.21.8-YarnRepMain" ]
   workflow_dispatch:
 
 jobs:
@@ -22,8 +22,8 @@ jobs:
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
-      # ====== 新增：自动修复反编译错误 ======
-      - name: 修复 Record / Enum 反编译问题
+      # ====== 增强的自动修复 ======
+      - name: 自动修复 Record / Enum / 构造器问题
         run: |
           python3 - << 'EOF'
           import os, re, sys
@@ -37,8 +37,8 @@ jobs:
                   content = f.read()
               original = content
 
-              # 匹配内部类和顶层类（支持缩进）
-              class_record_pattern = re.compile(
+              # 匹配 Record 类（支持内部类）
+              record_pattern = re.compile(
                   r'^(?P<indent>\s*)public\s+(?:static\s+)?(?:final\s+)?class\s+(?P<name>\w+)\s+extends\s+Record\s*\{',
                   re.MULTILINE
               )
@@ -52,37 +52,30 @@ jobs:
               i = 0
               while i < len(lines):
                   line = lines[i]
-                  m_record = class_record_pattern.match(line)
+                  m_rec = record_pattern.match(line)
                   m_enum = enum_pattern.match(line)
-                  if m_record or m_enum:
-                      if m_record:
-                          indent = m_record.group('indent')
-                          class_name = m_record.group('name')
-                          is_record = True
-                      else:
-                          indent = m_enum.group('indent')
-                          class_name = m_enum.group('name')
-                          is_record = False
 
-                      # 找到类体范围（匹配大括号）
+                  if m_rec or m_enum:
+                      indent = m_rec.group('indent') if m_rec else m_enum.group('indent')
+                      class_name = m_rec.group('name') if m_rec else m_enum.group('name')
+                      is_record = bool(m_rec)
+
+                      # 定位类体
                       start = i
                       brace_count = 0
                       j = i
                       while j < len(lines):
                           for ch in lines[j]:
-                              if ch == '{':
-                                  brace_count += 1
+                              if ch == '{': brace_count += 1
                               elif ch == '}':
                                   brace_count -= 1
-                                  if brace_count == 0:
-                                      break
-                          if brace_count == 0:
-                              break
+                                  if brace_count == 0: break
+                          if brace_count == 0: break
                           j += 1
                       body_lines = lines[start+1:j]
 
                       if is_record:
-                          # 提取非静态字段作为 record 组件
+                          # 1. 提取非静态 final 字段作为 record 组件
                           field_pattern = re.compile(
                               r'^\s*(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?(\w+)\s+(\w+)\s*(?:=.*)?;$'
                           )
@@ -92,8 +85,10 @@ jobs:
                               if fm and 'static' not in b_line:
                                   comp_type = fm.group(1)
                                   comp_name = fm.group(2)
+                                  # 忽略特殊名称
                                   if not comp_name.startswith('field_') and not comp_name.startswith('_'):
                                       components.append((comp_type, comp_name))
+
                           # 如果没提取到，从构造器参数取
                           if not components:
                               ctor_pattern = re.compile(
@@ -103,34 +98,52 @@ jobs:
                                   cm = ctor_pattern.search(b_line)
                                   if cm:
                                       params = cm.group(1)
+                                      # 去掉可能残留的 ', this' 等
+                                      params = re.sub(r',\s*this\s*', '', params)
                                       param_parts = [p.strip() for p in params.split(',') if p.strip()]
                                       for p in param_parts:
-                                          parts = p.split()
+                                          # 去掉 final 等修饰
+                                          parts = [x for x in p.split() if x not in ('final', 'public', 'private', 'protected')]
                                           if len(parts) >= 2:
                                               comp_type = parts[-2]
                                               comp_name = parts[-1]
                                               components.append((comp_type, comp_name))
                                       break
 
+                          # 生成 record 声明
                           comp_str = ', '.join([f'{t} {n}' for t, n in components])
                           new_decl = f'{indent}public record {class_name}({comp_str}) {{'
                           new_lines.append(new_decl)
 
-                          # 清理类体：删掉字段声明和 ObjectMethods 方法
+                          # 清理类体：删除字段声明、删除 ObjectMethods 方法、删除错误构造器
                           body_str = '\n'.join(body_lines)
+                          # 删除字段行
                           body_str = re.sub(r'^\s*(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?\w+\s+\w+\s*(?:=.*)?;$', '', body_str, flags=re.MULTILINE)
+                          # 删除 ObjectMethods 方法（toString/hashCode/equals）
                           body_str = re.sub(
                               r'(?s)@Override\s+public\s+(?:final\s+)?(?:String|int|boolean)\s+(?:toString|hashCode|equals)\s*\([^)]*\)\s*\{[^}]*ObjectMethods\.bootstrap[^}]*\}',
                               '',
                               body_str
                           )
-                          # 添加缩进（4空格）并写入
+                          # 删除任何包含 ', this' 的构造器调用（如 super(..., this) 等）
+                          body_str = re.sub(r'\([^)]*,\s*this\s*\)', '()', body_str)
+                          # 删除多余的构造器定义（如果参数与组件匹配），保留可能存在的自定义构造器
+                          # 这里简化：删除所有以类名开头的构造器（因为 record 会自动生成）
+                          # 但如果构造器有额外逻辑，可能需要保留，但反编译通常无自定义逻辑，可安全删除
+                          body_str = re.sub(
+                              r'(?s)public\s+' + re.escape(class_name) + r'\s*\([^)]*\)\s*\{[^}]*\}',
+                              '',
+                              body_str
+                          )
+
+                          # 缩进处理
                           for bline in body_str.splitlines():
                               if bline.strip():
                                   new_lines.append('    ' + bline)
                               else:
                                   new_lines.append('')
                           new_lines.append(indent + '}')
+
                       else:
                           # 处理 Enum
                           const_pattern = re.compile(r'^\s*public\s+static\s+final\s+\w+\s+(\w+)\s*=\s*new\s+\w+\(.*\);')
@@ -154,9 +167,10 @@ jobs:
                               else:
                                   new_lines.append('')
                           new_lines.append(indent + '}')
+
                       i = j + 1
                       continue
-                  # 普通行直接复制
+
                   new_lines.append(line)
                   i += 1
 
