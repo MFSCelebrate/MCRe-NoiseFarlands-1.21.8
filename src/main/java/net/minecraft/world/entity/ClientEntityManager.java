@@ -112,8 +112,7 @@ public class ClientEntityManager<T extends EntityLike> {
          * WARNING - void declaration
          */
         Listener(T t, long section, EntityTrackingSection<T> entityTrackingSection) {
-            void var3_3;
-            void entity;
+            
             this.manager = (ClientEntityManager)clientEntityManager;
             this.entity = entity;
             this.lastSectionPos = var3_3;

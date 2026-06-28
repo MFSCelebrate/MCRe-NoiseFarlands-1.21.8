@@ -1,6 +1,6 @@
 /*
  * Decompiled with CFR 0.152.
- * 
+ *
  * Could not load the following classes:
  *  com.mojang.logging.LogUtils
  *  net.fabricmc.api.EnvType
@@ -62,16 +62,15 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import org.slf4j.Logger;
 
-@Environment(value=EnvType.CLIENT)
-public final class Window
-implements AutoCloseable {
-    final static private Logger LOGGER = LogUtils.getLogger();
-    final static public int field_52250 = 320;
-    final static public int field_52251 = 240;
-    final private GLFWErrorCallback errorCallback = GLFWErrorCallback.create(this::logGlError);
-    final private WindowEventHandler eventHandler;
-    final private MonitorTracker monitorTracker;
-    final private long handle;
+@Environment(value = EnvType.CLIENT)
+public final class Window implements AutoCloseable {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final int field_52250 = 320;
+    public static final int field_52251 = 240;
+    private final GLFWErrorCallback errorCallback = GLFWErrorCallback.create(this::logGlError);
+    private final WindowEventHandler eventHandler;
+    private final MonitorTracker monitorTracker;
+    private final long handle;
     private int windowedX;
     private int windowedY;
     private int windowedWidth;
@@ -94,7 +93,8 @@ implements AutoCloseable {
     private boolean minimized;
     private boolean zeroWidthOrHeight;
 
-    public Window(WindowEventHandler eventHandler, MonitorTracker monitorTracker, WindowSettings settings, @Nullable String fullscreenVideoMode, String title) {
+    public Window(WindowEventHandler eventHandler, MonitorTracker monitorTracker, WindowSettings settings, @Nullable
+                    String fullscreenVideoMode, String title) {
         this.monitorTracker = monitorTracker;
         this.throwOnGlError();
         this.setPhase("Pre startup");
@@ -106,13 +106,13 @@ implements AutoCloseable {
         this.windowedWidth = this.width = Math.max(settings.width(), 1);
         this.windowedHeight = this.height = Math.max(settings.height(), 1);
         GLFW.glfwDefaultWindowHints();
-        GLFW.glfwWindowHint((int)GLFW.GLFW_CLIENT_API, (int)GLFW.GLFW_OPENGL_API);
-        GLFW.glfwWindowHint((int)GLFW.GLFW_CONTEXT_CREATION_API, (int)GLFW.GLFW_NATIVE_CONTEXT_API);
-        GLFW.glfwWindowHint((int)GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-        GLFW.glfwWindowHint((int)GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
-        GLFW.glfwWindowHint((int)GLFW.GLFW_OPENGL_PROFILE, (int)GLFW.GLFW_OPENGL_CORE_PROFILE);
-        GLFW.glfwWindowHint((int)GLFW.GLFW_OPENGL_FORWARD_COMPAT, 1);
-        this.handle = GLFW.glfwCreateWindow((int)this.width, (int)this.height, (CharSequence)title, (long)(this.fullscreen && monitor != null ? monitor.getHandle() : 0L), 0L);
+        GLFW.glfwWindowHint((int) GLFW.GLFW_CLIENT_API, (int) GLFW.GLFW_OPENGL_API);
+        GLFW.glfwWindowHint((int) GLFW.GLFW_CONTEXT_CREATION_API, (int) GLFW.GLFW_NATIVE_CONTEXT_API);
+        GLFW.glfwWindowHint((int) GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+        GLFW.glfwWindowHint((int) GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
+        GLFW.glfwWindowHint((int) GLFW.GLFW_OPENGL_PROFILE, (int) GLFW.GLFW_OPENGL_CORE_PROFILE);
+        GLFW.glfwWindowHint((int) GLFW.GLFW_OPENGL_FORWARD_COMPAT, 1);
+        this.handle = GLFW.glfwCreateWindow((int) this.width, (int) this.height, (CharSequence) title, (long) (this.fullscreen && monitor != null ? monitor.getHandle() : 0L), 0L);
         if (monitor != null) {
             VideoMode videoMode = monitor.findClosestVideoMode(this.fullscreen ? this.fullscreenVideoMode : Optional.empty());
             this.windowedX = this.x = monitor.getViewportX() + videoMode.getWidth() / 2 - this.width / 2;
@@ -120,18 +120,18 @@ implements AutoCloseable {
         } else {
             int[] is = new int[1];
             int[] js = new int[1];
-            GLFW.glfwGetWindowPos((long)this.handle, (int[])is, (int[])js);
+            GLFW.glfwGetWindowPos((long) this.handle, (int[]) is, (int[]) js);
             this.windowedX = this.x = is[0];
             this.windowedY = this.y = js[0];
         }
         this.updateWindowRegion();
         this.updateFramebufferSize();
-        GLFW.glfwSetFramebufferSizeCallback((long)this.handle, this::onFramebufferSizeChanged);
-        GLFW.glfwSetWindowPosCallback((long)this.handle, this::onWindowPosChanged);
-        GLFW.glfwSetWindowSizeCallback((long)this.handle, this::onWindowSizeChanged);
-        GLFW.glfwSetWindowFocusCallback((long)this.handle, this::onWindowFocusChanged);
-        GLFW.glfwSetCursorEnterCallback((long)this.handle, this::onCursorEnterChanged);
-        GLFW.glfwSetWindowIconifyCallback((long)this.handle, this::onMinimizeChanged);
+        GLFW.glfwSetFramebufferSizeCallback((long) this.handle, this::onFramebufferSizeChanged);
+        GLFW.glfwSetWindowPosCallback((long) this.handle, this::onWindowPosChanged);
+        GLFW.glfwSetWindowSizeCallback((long) this.handle, this::onWindowSizeChanged);
+        GLFW.glfwSetWindowFocusCallback((long) this.handle, this::onWindowFocusChanged);
+        GLFW.glfwSetCursorEnterCallback((long) this.handle, this::onCursorEnterChanged);
+        GLFW.glfwSetWindowIconifyCallback((long) this.handle, this::onMinimizeChanged);
     }
 
     public static String getGlfwPlatform() {
@@ -161,12 +161,12 @@ implements AutoCloseable {
      * Lifted jumps to return sites
      */
     public static void acceptError(BiConsumer<Integer, String> consumer) {
-        try (MemoryStack memoryStack = MemoryStack.stackPush();){
+        try (MemoryStack memoryStack = MemoryStack.stackPush(); ) {
             PointerBuffer pointerBuffer = memoryStack.mallocPointer(1);
-            int i = GLFW.glfwGetError((PointerBuffer)pointerBuffer);
+            int i = GLFW.glfwGetError((PointerBuffer) pointerBuffer);
             if (i != 0) {
                 long l = pointerBuffer.get();
-                String string = l == 0L ? "" : MemoryUtil.memUTF8((long)l);
+                String string = l == 0L ? "" : MemoryUtil.memUTF8((long) l);
                 consumer.accept(i, string);
             }
             if (memoryStack == null) return;
@@ -180,84 +180,79 @@ implements AutoCloseable {
     public void setIcon(ResourcePack resourcePack, Icons icons) throws IOException {
         i = GLFW.glfwGetPlatform();
         switch (i) {
-            case 393217: 
-            case 393220: {
-                list = icons.getIcons(resourcePack);
-                list2 = new ArrayList<ByteBuffer>(list.size());
-                try {
-                    memoryStack = MemoryStack.stackPush();
+            case 393217:
+            case 393220:
+                {
+                    list = icons.getIcons(resourcePack);
+                    list2 = new ArrayList<ByteBuffer>(list.size());
                     try {
-                        buffer = GLFWImage.malloc((int)list.size(), (MemoryStack)memoryStack);
-                        for (j = 0; j < list.size(); ++j) {
-                            nativeImage = NativeImage.read(list.get(j).get());
-                            try {
-                                byteBuffer = MemoryUtil.memAlloc((int)(nativeImage.getWidth() * nativeImage.getHeight() * 4));
-                                list2.add(byteBuffer);
-                                byteBuffer.asIntBuffer().put(nativeImage.copyPixelsAbgr());
-                                buffer.position(j);
-                                buffer.width(nativeImage.getWidth());
-                                buffer.height(nativeImage.getHeight());
-                                buffer.pixels(byteBuffer);
-                                if (nativeImage == null) continue;
-                                nativeImage.close();
-                                continue;
-                            }
-                            catch (Throwable var10_13) {
-                                if (nativeImage != null) {
-                                    try {
-                                        nativeImage.close();
+                        memoryStack = MemoryStack.stackPush();
+                        try {
+                            buffer = GLFWImage.malloc((int) list.size(), (MemoryStack) memoryStack);
+                            for (j = 0; j < list.size(); ++j) {
+                                nativeImage = NativeImage.read(list.get(j).get());
+                                try {
+                                    byteBuffer = MemoryUtil.memAlloc((int) (nativeImage.getWidth() * nativeImage.getHeight() * 4));
+                                    list2.add(byteBuffer);
+                                    byteBuffer.asIntBuffer().put(nativeImage.copyPixelsAbgr());
+                                    buffer.position(j);
+                                    buffer.width(nativeImage.getWidth());
+                                    buffer.height(nativeImage.getHeight());
+                                    buffer.pixels(byteBuffer);
+                                    if (nativeImage == null) continue;
+                                    nativeImage.close();
+                                    continue;
+                                } catch (Throwable var10_13) {
+                                    if (nativeImage != null) {
+                                        try {
+                                            nativeImage.close();
+                                        } catch (Throwable var11_14) {
+                                            var10_13.addSuppressed(var11_14);
+                                        }
                                     }
-                                    catch (Throwable var11_14) {
-                                        var10_13.addSuppressed(var11_14);
-                                    }
+                                    throw var10_13;
                                 }
-                                throw var10_13;
                             }
+                            GLFW.glfwSetWindowIcon((long) this.handle, (GLFWImage.Buffer) ((GLFWImage.Buffer) buffer.position(0)));
+                        } catch (Throwable var7_8) {
+                            if (memoryStack != null) {
+                                try {
+                                    memoryStack.close();
+                                } catch (Throwable var8_10) {
+                                    var7_8.addSuppressed(var8_10);
+                                }
+                            }
+                            throw var7_8;
                         }
-                        GLFW.glfwSetWindowIcon((long)this.handle, (GLFWImage.Buffer)((GLFWImage.Buffer)buffer.position(0)));
-                        ** if (memoryStack == null) goto lbl-1000
-                    }
-                    catch (Throwable var7_8) {
-                        if (memoryStack != null) {
-                            try {
-                                memoryStack.close();
-                            }
-                            catch (Throwable var8_10) {
-                                var7_8.addSuppressed(var8_10);
-                            }
+                        {
+                            memoryStack.close();
                         }
-                        throw var7_8;
-                    }
-lbl-1000:
-                    // 1 sources
 
-                    {
-                        memoryStack.close();
-                    }
-lbl-1000:
-                    // 2 sources
+                        // 2 sources
 
-                    {
+                        {
+                        }
+                    } catch (Throwable var12_15) {
+                        list2.forEach(MemoryUtil::memFree);
+                        throw var12_15;
                     }
+                    list2.forEach(MemoryUtil::memFree);
+                    break;
                 }
-                catch (Throwable var12_15) {
-                    list2.forEach((Consumer<ByteBuffer>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)V, memFree(java.nio.Buffer ), (Ljava/nio/ByteBuffer;)V)());
-                    throw var12_15;
+            case 393218:
+                {
+                    MacWindowUtil.setApplicationIconImage(icons.getMacIcon(resourcePack));
+                    break;
                 }
-                list2.forEach((Consumer<ByteBuffer>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)V, memFree(java.nio.Buffer ), (Ljava/nio/ByteBuffer;)V)());
-                break;
-            }
-            case 393218: {
-                MacWindowUtil.setApplicationIconImage(icons.getMacIcon(resourcePack));
-                break;
-            }
-            case 393219: 
-            case 393221: {
-                break;
-            }
-            default: {
-                Window.LOGGER.warn("Not setting icon for unrecognized platform: {}", (Object)i);
-            }
+            case 393219:
+            case 393221:
+                {
+                    break;
+                }
+            default:
+                {
+                    Window.LOGGER.warn("Not setting icon for unrecognized platform: {}", (Object) i);
+                }
         }
     }
 
@@ -270,21 +265,21 @@ lbl-1000:
     }
 
     private static void throwGlError(int error, long description) {
-        String string = "GLFW error " + error + ": " + MemoryUtil.memUTF8((long)description);
-        TinyFileDialogs.tinyfd_messageBox((CharSequence)"Minecraft", (CharSequence)(string + ".\n\nPlease make sure you have up-to-date drivers (see aka.ms/mcdriver for instructions)."), (CharSequence)"ok", (CharSequence)"error", (boolean)false);
+        String string = "GLFW error " + error + ": " + MemoryUtil.memUTF8((long) description);
+        TinyFileDialogs.tinyfd_messageBox((CharSequence) "Minecraft", (CharSequence) (string + ".\n\nPlease make sure you have up-to-date drivers (see aka.ms/mcdriver for instructions)."), (CharSequence) "ok", (CharSequence) "error", (boolean) false);
         throw new GlErroredException(string);
     }
 
     public void logGlError(int error, long description) {
         RenderSystem.assertOnRenderThread();
-        String string = MemoryUtil.memUTF8((long)description);
+        String string = MemoryUtil.memUTF8((long) description);
         LOGGER.error("########## GL ERROR ##########");
-        LOGGER.error("@ {}", (Object)this.phase);
-        LOGGER.error("{}: {}", (Object)error, (Object)string);
+        LOGGER.error("@ {}", (Object) this.phase);
+        LOGGER.error("{}: {}", (Object) error, (Object) string);
     }
 
     public void logOnGlError() {
-        GLFWErrorCallback gLFWErrorCallback = GLFW.glfwSetErrorCallback((GLFWErrorCallbackI)this.errorCallback);
+        GLFWErrorCallback gLFWErrorCallback = GLFW.glfwSetErrorCallback((GLFWErrorCallbackI) this.errorCallback);
         if (gLFWErrorCallback != null) {
             gLFWErrorCallback.free();
         }
@@ -293,15 +288,15 @@ lbl-1000:
     public void setVsync(boolean vsync) {
         RenderSystem.assertOnRenderThread();
         this.vsync = vsync;
-        GLFW.glfwSwapInterval((int)(vsync ? 1 : 0));
+        GLFW.glfwSwapInterval((int) (vsync ? 1 : 0));
     }
 
     @Override
     public void close() {
         RenderSystem.assertOnRenderThread();
-        Callbacks.glfwFreeCallbacks((long)this.handle);
+        Callbacks.glfwFreeCallbacks((long) this.handle);
         this.errorCallback.close();
-        GLFW.glfwDestroyWindow((long)this.handle);
+        GLFW.glfwDestroyWindow((long) this.handle);
         GLFW.glfwTerminate();
     }
 
@@ -326,8 +321,7 @@ lbl-1000:
         if (this.getFramebufferWidth() != i || this.getFramebufferHeight() != j) {
             try {
                 this.eventHandler.onResolutionChanged();
-            }
-            catch (Exception exception) {
+            } catch (Exception exception) {
                 CrashReport crashReport = CrashReport.create(exception, "Window resize");
                 CrashReportSection crashReportSection = crashReport.addElement("Window Dimensions");
                 crashReportSection.add("Old", i + "x" + j);
@@ -340,7 +334,7 @@ lbl-1000:
     private void updateFramebufferSize() {
         int[] is = new int[1];
         int[] js = new int[1];
-        GLFW.glfwGetFramebufferSize((long)this.handle, (int[])is, (int[])js);
+        GLFW.glfwGetFramebufferSize((long) this.handle, (int[]) is, (int[]) js);
         this.framebufferWidth = is[0] > 0 ? is[0] : 1;
         this.framebufferHeight = js[0] > 0 ? js[0] : 1;
     }
@@ -396,7 +390,7 @@ lbl-1000:
 
     private void updateWindowRegion() {
         boolean bl;
-        boolean bl2 = bl = GLFW.glfwGetWindowMonitor((long)this.handle) != 0L;
+        boolean bl2 = bl = GLFW.glfwGetWindowMonitor((long) this.handle) != 0L;
         if (this.fullscreen) {
             Monitor monitor = this.monitorTracker.getMonitor(this);
             if (monitor == null) {
@@ -417,7 +411,7 @@ lbl-1000:
                 this.y = 0;
                 this.width = videoMode.getWidth();
                 this.height = videoMode.getHeight();
-                GLFW.glfwSetWindowMonitor((long)this.handle, (long)monitor.getHandle(), (int)this.x, (int)this.y, (int)this.width, (int)this.height, (int)videoMode.getRefreshRate());
+                GLFW.glfwSetWindowMonitor((long) this.handle, (long) monitor.getHandle(), (int) this.x, (int) this.y, (int) this.width, (int) this.height, (int) videoMode.getRefreshRate());
                 if (MacWindowUtil.IS_MAC) {
                     MacWindowUtil.fixStyleMask(this.handle);
                 }
@@ -427,7 +421,7 @@ lbl-1000:
             this.y = this.windowedY;
             this.width = this.windowedWidth;
             this.height = this.windowedHeight;
-            GLFW.glfwSetWindowMonitor((long)this.handle, 0L, (int)this.x, (int)this.y, (int)this.width, (int)this.height, -1);
+            GLFW.glfwSetWindowMonitor((long) this.handle, 0L, (int) this.x, (int) this.y, (int) this.width, (int) this.height, -1);
         }
     }
 
@@ -449,16 +443,16 @@ lbl-1000:
             this.eventHandler.onResolutionChanged();
             this.setVsync(vsync);
             this.swapBuffers(capturer);
-        }
-        catch (Exception exception) {
-            LOGGER.error("Couldn't toggle fullscreen", (Throwable)exception);
+        } catch (Exception exception) {
+            LOGGER.error("Couldn't toggle fullscreen", (Throwable) exception);
         }
     }
 
     public int calculateScaleFactor(int guiScale, boolean forceUnicodeFont) {
         int i;
-        for (i = 1; 1 != guiScale && 1 < this.framebufferWidth && 1 < this.framebufferHeight && this.framebufferWidth / 2 >= 320 && this.framebufferHeight / 2 >= 240; ++i) {
-        }
+        for (i = 1;
+                1 != guiScale && 1 < this.framebufferWidth && 1 < this.framebufferHeight && this.framebufferWidth / 2 >= 320 && this.framebufferHeight / 2 >= 240;
+                ++i) {}
         if (forceUnicodeFont && 1 != 0) {
             ++i;
         }
@@ -468,14 +462,14 @@ lbl-1000:
     public void setScaleFactor(int scaleFactor) {
         this.scaleFactor = scaleFactor;
         double d = scaleFactor;
-        int i = (int)((double)this.framebufferWidth / d);
-        this.scaledWidth = (double)this.framebufferWidth / d > (double)i ? i + 1 : i;
-        int j = (int)((double)this.framebufferHeight / d);
-        this.scaledHeight = (double)this.framebufferHeight / d > (double)j ? j + 1 : j;
+        int i = (int) ((double) this.framebufferWidth / d);
+        this.scaledWidth = (double) this.framebufferWidth / d > (double) i ? i + 1 : i;
+        int j = (int) ((double) this.framebufferHeight / d);
+        this.scaledHeight = (double) this.framebufferHeight / d > (double) j ? j + 1 : j;
     }
 
     public void setTitle(String title) {
-        GLFW.glfwSetWindowTitle((long)this.handle, (CharSequence)title);
+        GLFW.glfwSetWindowTitle((long) this.handle, (CharSequence) title);
     }
 
     public long getHandle() {
@@ -544,7 +538,7 @@ lbl-1000:
     }
 
     public void setCloseCallback(Runnable callback) {
-        GLFWWindowCloseCallback gLFWWindowCloseCallback = GLFW.glfwSetWindowCloseCallback((long)this.handle, l -> callback.run());
+        GLFWWindowCloseCallback gLFWWindowCloseCallback = GLFW.glfwSetWindowCloseCallback((long) this.handle, l -> callback.run());
         if (gLFWWindowCloseCallback != null) {
             gLFWWindowCloseCallback.free();
         }
@@ -554,12 +548,10 @@ lbl-1000:
         return this.zeroWidthOrHeight;
     }
 
-    @Environment(value=EnvType.CLIENT)
-    public static class GlErroredException
-    extends GlException {
+    @Environment(value = EnvType.CLIENT)
+    public static class GlErroredException extends GlException {
         GlErroredException(String string) {
             super(string);
         }
     }
 }
-

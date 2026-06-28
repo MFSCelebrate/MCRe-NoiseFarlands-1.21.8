@@ -51,7 +51,7 @@ public class BuiltChunkStorage {
                     int m = this.getChunkIndex(j, k, l);
                     ChunkBuilder chunkBuilder2 = chunkBuilder;
                     Objects.requireNonNull(chunkBuilder2);
-                    this.chunks[m] = chunkBuilder2.new ChunkBuilder.BuiltChunk(m, ChunkSectionPos.asLong(j, k + this.world.getBottomSectionCoord(), l));
+                    this.chunks[m] = chunkBuilder2.new BuiltChunk(m, ChunkSectionPos.asLong(j, k + this.world.getBottomSectionCoord(), l));
                 }
             }
         }

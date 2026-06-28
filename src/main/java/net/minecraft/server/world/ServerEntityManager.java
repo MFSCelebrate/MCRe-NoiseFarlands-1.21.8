@@ -387,8 +387,7 @@ implements AutoCloseable {
          * WARNING - void declaration
          */
         Listener(T t, long section, EntityTrackingSection<T> entityTrackingSection) {
-            void var3_3;
-            void entity;
+            
             this.manager = (ServerEntityManager)serverEntityManager;
             this.entity = entity;
             this.sectionPos = var3_3;

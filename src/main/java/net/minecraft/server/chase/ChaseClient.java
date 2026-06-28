@@ -91,7 +91,7 @@ public class ChaseClient {
                             string2 = bufferedReader.readLine();
                             if (string2 == null) {
                                 ChaseClient.LOGGER.warn("Lost connection to remote control server {}. Will retry in {}s.", (Object)string, (Object)5);
-                                ** break;
+                                break;
                             }
                             this.parseMessage(string2);
                         }

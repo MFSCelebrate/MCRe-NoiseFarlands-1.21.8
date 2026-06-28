@@ -1,6 +1,6 @@
 /*
  * Decompiled with CFR 0.152.
- * 
+ *
  * Could not load the following classes:
  *  com.google.common.collect.Lists
  *  com.google.common.collect.Maps
@@ -63,16 +63,19 @@ import net.minecraft.world.block.WireOrientation;
 import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
-public class PistonBlock
-extends FacingBlock {
-    final static public MapCodec<PistonBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group((App)Codec.BOOL.fieldOf("sticky").forGetter(block -> block.sticky), PistonBlock.createSettingsCodec()).apply((Applicative)instance, PistonBlock::new));
-    final static public BooleanProperty EXTENDED = Properties.EXTENDED;
-    final static public int field_31373 = 0;
-    final static public int field_31374 = 1;
-    final static public int field_31375 = 2;
-    final static public int field_31376 = 4;
-    final static private Map<Direction, VoxelShape> EXTENDED_SHAPES_BY_DIRECTION = VoxelShapes.createFacingShapeMap(Block.createCuboidZShape(16.0, 4.0, 16.0));
-    final private boolean sticky;
+public class PistonBlock extends FacingBlock {
+    public static final MapCodec<
+            PistonBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group((App) Codec.BOOL.fieldOf("sticky").forGetter(block -> block.sticky), PistonBlock.createSettingsCodec()).apply((Applicative) instance, PistonBlock
+            ::new));
+    public static final BooleanProperty EXTENDED = Properties.EXTENDED;
+    public static final int field_31373 = 0;
+    public static final int field_31374 = 1;
+    public static final int field_31375 = 2;
+    public static final int field_31376 = 4;
+    private static final Map<
+            Direction,
+            VoxelShape> EXTENDED_SHAPES_BY_DIRECTION = VoxelShapes.createFacingShapeMap(Block.createCuboidZShape(16.0, 4.0, 16.0));
+    private final boolean sticky;
 
     public MapCodec<PistonBlock> getCodec() {
         return CODEC;
@@ -80,7 +83,7 @@ extends FacingBlock {
 
     public PistonBlock(boolean sticky, AbstractBlock.Settings settings) {
         super(settings);
-        this.setDefaultState((BlockState)((BlockState)((BlockState)this.stateManager.getDefaultState()).with(FACING, Direction.NORTH)).with(EXTENDED, false));
+        this.setDefaultState((BlockState) ((BlockState) ((BlockState) this.stateManager.getDefaultState()).with(FACING, Direction.NORTH)).with(EXTENDED, false));
         this.sticky = sticky;
     }
 
@@ -100,7 +103,8 @@ extends FacingBlock {
     }
 
     @Override
-    protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, @Nullable WireOrientation wireOrientation, boolean notify) {
+    protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, @Nullable
+                    WireOrientation wireOrientation, boolean notify) {
         if (!world.isClient) {
             this.tryMove(world, pos, state);
         }
@@ -118,11 +122,11 @@ extends FacingBlock {
 
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
-        return (BlockState)((BlockState)this.getDefaultState().with(FACING, ctx.getPlayerLookDirection().getOpposite())).with(EXTENDED, false);
+        return (BlockState) ((BlockState) this.getDefaultState().with(FACING, ctx.getPlayerLookDirection().getOpposite())).with(EXTENDED, false);
     }
 
     private void tryMove(World world, BlockPos pos, BlockState state) {
-        Direction direction = (Direction)state.get(FACING);
+        Direction direction = (Direction) state.get(FACING);
         boolean bl = this.shouldExtend(world, pos, direction);
         if (bl && !state.get(EXTENDED).booleanValue()) {
             if (new PistonHandler(world, pos, direction, true).calculatePush()) {
@@ -134,7 +138,9 @@ extends FacingBlock {
             BlockPos blockPos = pos.net_minecraft_util_math_BlockPos_offset(direction, 2);
             BlockState blockState = world.getBlockState(blockPos);
             int i = 1;
-            if (blockState.isOf(Blocks.MOVING_PISTON) && blockState.get(FACING) == direction && (blockEntity = world.getBlockEntity(blockPos)) instanceof PistonBlockEntity && (pistonBlockEntity = (PistonBlockEntity)blockEntity).isExtending() && (pistonBlockEntity.getProgress(0.0f) < 0.5f || world.getTime() == pistonBlockEntity.getSavedWorldTime() || ((ServerWorld)world).isInBlockTick())) {
+            if (blockState.isOf(Blocks.MOVING_PISTON) && blockState.get(FACING) == direction && (blockEntity = world.getBlockEntity(blockPos))
+                            instanceof
+                            PistonBlockEntity && (pistonBlockEntity = (PistonBlockEntity) blockEntity).isExtending() && (pistonBlockEntity.getProgress(0.0f) < 0.5f || world.getTime() == pistonBlockEntity.getSavedWorldTime() || ((ServerWorld) world).isInBlockTick())) {
                 i = 2;
             }
             world.addSyncedBlockEvent(pos, this, i, direction.getIndex());
@@ -143,7 +149,8 @@ extends FacingBlock {
 
     private boolean shouldExtend(RedstoneView world, BlockPos pos, Direction pistonFace) {
         for (Direction direction : Direction.values()) {
-            if (direction == pistonFace || !world.isEmittingRedstonePower(pos.net_minecraft_util_math_BlockPos_offset(direction), direction)) continue;
+            if (direction == pistonFace || !world.isEmittingRedstonePower(pos.net_minecraft_util_math_BlockPos_offset(direction), direction))
+                continue;
             return true;
         }
         if (world.isEmittingRedstonePower(pos, Direction.DOWN)) {
@@ -151,7 +158,8 @@ extends FacingBlock {
         }
         BlockPos blockPos = pos.net_minecraft_util_math_BlockPos_up();
         for (Direction direction2 : Direction.values()) {
-            if (direction2 == Direction.DOWN || !world.isEmittingRedstonePower(blockPos.net_minecraft_util_math_BlockPos_offset(direction2), direction2)) continue;
+            if (direction2 == Direction.DOWN || !world.isEmittingRedstonePower(blockPos.net_minecraft_util_math_BlockPos_offset(direction2), direction2))
+                continue;
             return true;
         }
         return false;
@@ -163,8 +171,8 @@ extends FacingBlock {
      */
     @Override
     protected boolean onSyncedBlockEvent(BlockState state, World world, BlockPos pos, int type, int data) {
-        Direction direction = (Direction)state.get(FACING);
-        BlockState blockState = (BlockState)state.with(EXTENDED, true);
+        Direction direction = (Direction) state.get(FACING);
+        BlockState blockState = (BlockState) state.with(EXTENDED, true);
         if (!world.isClient) {
             boolean bl = this.shouldExtend(world, pos, direction);
             if (bl && (type == 1 || type == 2)) {
@@ -185,11 +193,11 @@ extends FacingBlock {
             if (type != 1 && type != 2) return true;
             BlockEntity blockEntity = world.getBlockEntity(pos.net_minecraft_util_math_BlockPos_offset(direction));
             if (blockEntity instanceof PistonBlockEntity) {
-                ((PistonBlockEntity)blockEntity).finish();
+                ((PistonBlockEntity) blockEntity).finish();
             }
-            BlockState blockState2 = (BlockState)((BlockState)Blocks.MOVING_PISTON.getDefaultState().with(PistonExtensionBlock.FACING, direction)).with(PistonExtensionBlock.TYPE, this.sticky ? PistonType.STICKY : PistonType.DEFAULT);
+            BlockState blockState2 = (BlockState) ((BlockState) Blocks.MOVING_PISTON.getDefaultState().with(PistonExtensionBlock.FACING, direction)).with(PistonExtensionBlock.TYPE, this.sticky ? PistonType.STICKY : PistonType.DEFAULT);
             world.setBlockState(pos, blockState2, Block.SKIP_REDRAW_AND_BLOCK_ENTITY_REPLACED_CALLBACK | Block.FORCE_STATE);
-            world.addBlockEntity(PistonExtensionBlock.createBlockEntityPiston(pos, blockState2, (BlockState)this.getDefaultState().with(FACING, Direction.byIndex(data & 7)), direction, false, true));
+            world.addBlockEntity(PistonExtensionBlock.createBlockEntityPiston(pos, blockState2, (BlockState) this.getDefaultState().with(FACING, Direction.byIndex(data & 7)), direction, false, true));
             world.updateNeighbors(pos, blockState2.getBlock());
             blockState2.updateNeighbors(world, pos, Block.NOTIFY_LISTENERS);
             if (this.sticky) {
@@ -198,7 +206,9 @@ extends FacingBlock {
                 BlockPos blockPos = pos.net_minecraft_util_math_BlockPos_add(direction.getOffsetX() * 2, direction.getOffsetY() * 2, direction.getOffsetZ() * 2);
                 BlockState blockState3 = world.getBlockState(blockPos);
                 boolean bl2 = false;
-                if (blockState3.isOf(Blocks.MOVING_PISTON) && (blockEntity2 = world.getBlockEntity(blockPos)) instanceof PistonBlockEntity && (pistonBlockEntity = (PistonBlockEntity)blockEntity2).getFacing() == direction && pistonBlockEntity.isExtending()) {
+                if (blockState3.isOf(Blocks.MOVING_PISTON) && (blockEntity2 = world.getBlockEntity(blockPos))
+                                instanceof
+                                PistonBlockEntity && (pistonBlockEntity = (PistonBlockEntity) blockEntity2).getFacing() == direction && pistonBlockEntity.isExtending()) {
                     pistonBlockEntity.finish();
                     bl2 = true;
                 }
@@ -243,15 +253,18 @@ extends FacingBlock {
                 return false;
             }
             switch (state.getPistonBehavior()) {
-                case BLOCK: {
-                    return false;
-                }
-                case DESTROY: {
-                    return canBreak;
-                }
-                case PUSH_ONLY: {
-                    return direction == pistonDir;
-                }
+                case BLOCK:
+                    {
+                        return false;
+                    }
+                case DESTROY:
+                    {
+                        return canBreak;
+                    }
+                case PUSH_ONLY:
+                    {
+                        return direction == pistonDir;
+                    }
             }
         }
         return !state.hasBlockEntity();
@@ -261,8 +274,7 @@ extends FacingBlock {
      * WARNING - void declaration
      */
     private boolean move(World world, BlockPos pos, Direction dir, boolean extend) {
-        void var16_30;
-        void var16_28;
+
         BlockState blockState3;
         BlockPos blockPos3;
         int j;
@@ -303,15 +315,15 @@ extends FacingBlock {
             BlockState blockState = world.getBlockState(blockPos3);
             blockPos3 = blockPos3.net_minecraft_util_math_BlockPos_offset(direction);
             map.remove(blockPos3);
-            blockState3 = (BlockState)Blocks.MOVING_PISTON.getDefaultState().with(FACING, dir);
+            blockState3 = (BlockState) Blocks.MOVING_PISTON.getDefaultState().with(FACING, dir);
             world.setBlockState(blockPos3, blockState3, Block.SKIP_REDRAW_AND_BLOCK_ENTITY_REPLACED_CALLBACK | Block.MOVED);
-            world.addBlockEntity(PistonExtensionBlock.createBlockEntityPiston(blockPos3, blockState3, (BlockState)list2.get(j), dir, extend, false));
+            world.addBlockEntity(PistonExtensionBlock.createBlockEntityPiston(blockPos3, blockState3, (BlockState) list2.get(j), dir, extend, false));
             blockStates[i++] = blockState;
         }
         if (extend) {
             PistonType pistonType = this.sticky ? PistonType.STICKY : PistonType.DEFAULT;
-            BlockState blockState4 = (BlockState)((BlockState)Blocks.PISTON_HEAD.getDefaultState().with(PistonHeadBlock.FACING, dir)).with(PistonHeadBlock.TYPE, pistonType);
-            BlockState blockState = (BlockState)((BlockState)Blocks.MOVING_PISTON.getDefaultState().with(PistonExtensionBlock.FACING, dir)).with(PistonExtensionBlock.TYPE, this.sticky ? PistonType.STICKY : PistonType.DEFAULT);
+            BlockState blockState4 = (BlockState) ((BlockState) Blocks.PISTON_HEAD.getDefaultState().with(PistonHeadBlock.FACING, dir)).with(PistonHeadBlock.TYPE, pistonType);
+            BlockState blockState = (BlockState) ((BlockState) Blocks.MOVING_PISTON.getDefaultState().with(PistonExtensionBlock.FACING, dir)).with(PistonExtensionBlock.TYPE, this.sticky ? PistonType.STICKY : PistonType.DEFAULT);
             map.remove(blockPos);
             world.setBlockState(blockPos, blockState, Block.SKIP_REDRAW_AND_BLOCK_ENTITY_REPLACED_CALLBACK | Block.MOVED);
             world.addBlockEntity(PistonExtensionBlock.createBlockEntityPiston(blockPos, blockState, blockState4, dir, true, true));
@@ -321,8 +333,8 @@ extends FacingBlock {
             world.setBlockState(blockPos2, blockState5, Block.MOVED | Block.NOTIFY_LISTENERS | Block.FORCE_STATE);
         }
         for (Map.Entry entry : map.entrySet()) {
-            BlockPos blockPos5 = (BlockPos)entry.getKey();
-            BlockState blockState6 = (BlockState)entry.getValue();
+            BlockPos blockPos5 = (BlockPos) entry.getKey();
+            BlockState blockState6 = (BlockState) entry.getValue();
             blockState6.prepare(world, blockPos5, Block.NOTIFY_LISTENERS);
             blockState5.updateNeighbors(world, blockPos5, Block.NOTIFY_LISTENERS);
             blockState5.prepare(world, blockPos5, Block.NOTIFY_LISTENERS);
@@ -332,9 +344,9 @@ extends FacingBlock {
         int n = list3.size() - 1;
         while (var16_28 >= 0) {
             blockState3 = blockStates[i++];
-            BlockPos blockPos6 = list3.get((int)var16_28);
+            BlockPos blockPos6 = list3.get((int) var16_28);
             if (world instanceof ServerWorld) {
-                ServerWorld serverWorld = (ServerWorld)world;
+                ServerWorld serverWorld = (ServerWorld) world;
                 blockState3.onStateReplaced(serverWorld, blockPos6, false);
             }
             blockState3.prepare(world, blockPos6, Block.NOTIFY_LISTENERS);
@@ -343,7 +355,8 @@ extends FacingBlock {
         }
         int n2 = list.size() - 1;
         while (var16_30 >= 0) {
-            world.updateNeighborsAlways(list.get((int)var16_30), blockStates[i++].getBlock(), wireOrientation);
+            world.updateNeighborsAlways(list.get((int) var16_30), blockStates[
+            i++].getBlock(), wireOrientation);
             --var16_30;
         }
         if (extend) {
@@ -354,12 +367,12 @@ extends FacingBlock {
 
     @Override
     protected BlockState rotate(BlockState state, BlockRotation rotation) {
-        return (BlockState)state.with(FACING, rotation.rotate((Direction)state.get(FACING)));
+        return (BlockState) state.with(FACING, rotation.rotate((Direction) state.get(FACING)));
     }
 
     @Override
     protected BlockState mirror(BlockState state, BlockMirror mirror) {
-        return state.rotate(mirror.getRotation((Direction)state.get(FACING)));
+        return state.rotate(mirror.getRotation((Direction) state.get(FACING)));
     }
 
     @Override
@@ -377,4 +390,3 @@ extends FacingBlock {
         return false;
     }
 }
-
