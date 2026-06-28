@@ -26,6 +26,20 @@ jobs:
       - name: 修复 Record 类（删除 extends Record）
         run: find src/main/java -name "*.java" -exec sed -i 's/ extends Record//g' {} \;
 
+      - name: 修复 HashCodeOps/NullOps/NbtOps 的 extends 缺失
+        run: |
+          # 修复 HashCodeOps.java
+          sed -i '502s/.*/    final class Builder extends AbstractUniversalBuilder<HashCode, List<Pair<HashCode, HashCode>>> {/' src/main/java/net/minecraft/util/dynamic/HashCodeOps.java
+          sed -i '503d' src/main/java/net/minecraft/util/dynamic/HashCodeOps.java
+
+          # 修复 NullOps.java
+          sed -i '339s/.*/    static final class NullMapBuilder extends AbstractUniversalBuilder<Unit, Unit> {/' src/main/java/net/minecraft/util/dynamic/NullOps.java
+          sed -i '340d' src/main/java/net/minecraft/util/dynamic/NullOps.java
+
+          # 修复 NbtOps.java
+          sed -i '689s/.*/    class MapBuilder extends AbstractStringBuilder<NbtElement, NbtCompound> {/' src/main/java/net/minecraft/nbt/NbtOps.java
+          sed -i '690d' src/main/java/net/minecraft/nbt/NbtOps.java
+      
       - name: 构建完整核心
         run: ./gradlew compileJava --no-daemon
 
