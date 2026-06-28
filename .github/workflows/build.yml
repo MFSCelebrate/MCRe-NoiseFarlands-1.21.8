@@ -2,7 +2,7 @@ name: Build Yarn Mapping Minecraft 1.21.8
 
 on:
   push:
-    branches: [ "1.21.8-YarnRepMain" ]
+    branches: [ "1.21.8-BuildTest" ]
   workflow_dispatch:
 
 jobs:
