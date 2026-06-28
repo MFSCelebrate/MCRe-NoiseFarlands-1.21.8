@@ -22,6 +22,164 @@ jobs:
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
+      # ====== 新增：自动修复反编译错误 ======
+      - name: 修复 Record / Enum 反编译问题
+        run: |
+          python3 - << 'EOF'
+          import os, re, sys
+          from pathlib import Path
+
+          def get_java_files(root):
+              return list(Path(root).rglob("*.java"))
+
+          def fix_file(filepath):
+              with open(filepath, 'r', encoding='utf-8') as f:
+                  content = f.read()
+              original = content
+
+              # 匹配内部类和顶层类（支持缩进）
+              class_record_pattern = re.compile(
+                  r'^(?P<indent>\s*)public\s+(?:static\s+)?(?:final\s+)?class\s+(?P<name>\w+)\s+extends\s+Record\s*\{',
+                  re.MULTILINE
+              )
+              enum_pattern = re.compile(
+                  r'^(?P<indent>\s*)public\s+(?:static\s+)?(?:final\s+)?class\s+(?P<name>\w+)\s+extends\s+Enum\s*\{',
+                  re.MULTILINE
+              )
+
+              lines = content.splitlines()
+              new_lines = []
+              i = 0
+              while i < len(lines):
+                  line = lines[i]
+                  m_record = class_record_pattern.match(line)
+                  m_enum = enum_pattern.match(line)
+                  if m_record or m_enum:
+                      if m_record:
+                          indent = m_record.group('indent')
+                          class_name = m_record.group('name')
+                          is_record = True
+                      else:
+                          indent = m_enum.group('indent')
+                          class_name = m_enum.group('name')
+                          is_record = False
+
+                      # 找到类体范围（匹配大括号）
+                      start = i
+                      brace_count = 0
+                      j = i
+                      while j < len(lines):
+                          for ch in lines[j]:
+                              if ch == '{':
+                                  brace_count += 1
+                              elif ch == '}':
+                                  brace_count -= 1
+                                  if brace_count == 0:
+                                      break
+                          if brace_count == 0:
+                              break
+                          j += 1
+                      body_lines = lines[start+1:j]
+
+                      if is_record:
+                          # 提取非静态字段作为 record 组件
+                          field_pattern = re.compile(
+                              r'^\s*(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?(\w+)\s+(\w+)\s*(?:=.*)?;$'
+                          )
+                          components = []
+                          for b_line in body_lines:
+                              fm = field_pattern.match(b_line)
+                              if fm and 'static' not in b_line:
+                                  comp_type = fm.group(1)
+                                  comp_name = fm.group(2)
+                                  if not comp_name.startswith('field_') and not comp_name.startswith('_'):
+                                      components.append((comp_type, comp_name))
+                          # 如果没提取到，从构造器参数取
+                          if not components:
+                              ctor_pattern = re.compile(
+                                  r'public\s+' + re.escape(class_name) + r'\s*\(([^)]*)\)'
+                              )
+                              for b_line in body_lines:
+                                  cm = ctor_pattern.search(b_line)
+                                  if cm:
+                                      params = cm.group(1)
+                                      param_parts = [p.strip() for p in params.split(',') if p.strip()]
+                                      for p in param_parts:
+                                          parts = p.split()
+                                          if len(parts) >= 2:
+                                              comp_type = parts[-2]
+                                              comp_name = parts[-1]
+                                              components.append((comp_type, comp_name))
+                                      break
+
+                          comp_str = ', '.join([f'{t} {n}' for t, n in components])
+                          new_decl = f'{indent}public record {class_name}({comp_str}) {{'
+                          new_lines.append(new_decl)
+
+                          # 清理类体：删掉字段声明和 ObjectMethods 方法
+                          body_str = '\n'.join(body_lines)
+                          body_str = re.sub(r'^\s*(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?\w+\s+\w+\s*(?:=.*)?;$', '', body_str, flags=re.MULTILINE)
+                          body_str = re.sub(
+                              r'(?s)@Override\s+public\s+(?:final\s+)?(?:String|int|boolean)\s+(?:toString|hashCode|equals)\s*\([^)]*\)\s*\{[^}]*ObjectMethods\.bootstrap[^}]*\}',
+                              '',
+                              body_str
+                          )
+                          # 添加缩进（4空格）并写入
+                          for bline in body_str.splitlines():
+                              if bline.strip():
+                                  new_lines.append('    ' + bline)
+                              else:
+                                  new_lines.append('')
+                          new_lines.append(indent + '}')
+                      else:
+                          # 处理 Enum
+                          const_pattern = re.compile(r'^\s*public\s+static\s+final\s+\w+\s+(\w+)\s*=\s*new\s+\w+\(.*\);')
+                          consts = []
+                          other_lines = []
+                          for b_line in body_lines:
+                              cm = const_pattern.match(b_line)
+                              if cm:
+                                  consts.append(cm.group(1))
+                              else:
+                                  if 'values()' not in b_line and 'valueOf' not in b_line:
+                                      other_lines.append(b_line)
+                          new_decl = f'{indent}public enum {class_name} {{'
+                          new_lines.append(new_decl)
+                          if consts:
+                              const_str = ',\n    '.join(consts)
+                              new_lines.append('    ' + const_str + ';')
+                          for b_line in other_lines:
+                              if b_line.strip():
+                                  new_lines.append('    ' + b_line)
+                              else:
+                                  new_lines.append('')
+                          new_lines.append(indent + '}')
+                      i = j + 1
+                      continue
+                  # 普通行直接复制
+                  new_lines.append(line)
+                  i += 1
+
+              new_content = '\n'.join(new_lines)
+              if new_content != original:
+                  with open(filepath, 'w', encoding='utf-8') as f:
+                      f.write(new_content)
+                  return True
+              return False
+
+          root = 'src/main/java'
+          if not os.path.exists(root):
+              print("目录 src/main/java 不存在，跳过")
+              sys.exit(0)
+
+          fixed = 0
+          for java_file in get_java_files(root):
+              if fix_file(java_file):
+                  fixed += 1
+                  print(f"Fixed: {java_file}")
+          print(f"✅ 共修复 {fixed} 个文件")
+          EOF
+
       - name: 构建完整核心
         run: ./gradlew compileJava --no-daemon
 
