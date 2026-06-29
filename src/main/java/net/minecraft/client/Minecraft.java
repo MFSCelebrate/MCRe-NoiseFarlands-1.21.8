@@ -391,8 +391,9 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    private List<SimpleGizmoCollector.GizmoInstance> drainedLatestTickGizmos = new ArrayList<>();
 
    public Minecraft(final GameConfig gameConfig) {
-      LOGGER.info("=== Minecraft 构造函数开始 ===");
+      
       super("Client");
+      LOGGER.info("=== Minecraft 构造函数开始 ===");
       instance = this;
       this.clientStartTimeMs = System.currentTimeMillis();
       this.gameDirectory = gameConfig.location.gameDirectory;
@@ -1240,9 +1241,10 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    }
 
    private void runTick(final boolean advanceGameTime) {
-      if (this.tickCount < 5) {
-    LOGGER.info("runTick 第 {} 次调用", this.tickCount);
-      }
+    if (this.clientTickCount < 5) {
+        LOGGER.info("runTick 第 {} 次调用", this.clientTickCount);
+    }
+    // ... 原方法体
       this.window.setErrorSection("Pre render");
       if (this.window.shouldClose()) {
          this.stop();
