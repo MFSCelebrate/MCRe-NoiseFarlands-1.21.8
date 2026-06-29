@@ -288,11 +288,16 @@ public class FontManager implements AutoCloseable, PreparableReloadListener {
 
    private record BuilderResult(FontManager.BuilderId id, FontOption.Filter filter, Either<CompletableFuture<Optional<GlyphProvider>>, Identifier> result) {
     public Optional<List<Conditional>> resolve(final Function<Identifier, @Nullable List<Conditional>> resolver) {
-        if (this.result.isLeft()) {
-            Optional<GlyphProvider> optProvider = this.result.getLeft().join();
-            return Optional.of(optProvider.map(p -> List.of(new Conditional(p, this.filter))).orElse(List.of()));
-        } else {
-            Identifier reference = this.result.getRight();
+    // 处理 Left: CompletableFuture<Optional<GlyphProvider>>
+    Optional<List<Conditional>> leftResult = this.result.left()
+        .map(future -> future.join()
+            .map(p -> List.of(new Conditional(p, this.filter)))
+            .orElse(List.of())
+        );
+
+    // 处理 Right: Identifier
+    Optional<List<Conditional>> rightResult = this.result.right()
+        .flatMap(reference -> {
             List<Conditional> resolvedReferences = resolver.apply(reference);
             if (resolvedReferences == null) {
                 FontManager.LOGGER.warn(
@@ -303,7 +308,10 @@ public class FontManager implements AutoCloseable, PreparableReloadListener {
             } else {
                 return Optional.of(resolvedReferences.stream().map(this::mergeFilters).toList());
             }
-        }
+        });
+
+    // 合并两个 Optional（如果都有值，优先使用哪个？原逻辑可能只处理一个，这里用 or 合并）
+    return leftResult.or(() -> rightResult);
     }
 
     private Conditional mergeFilters(final Conditional original) {
