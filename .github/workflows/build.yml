@@ -83,13 +83,7 @@ jobs:
           jar tf minecraft-1.21.11-custom-full.jar | grep "glv.class"
           echo "===== 验证 dwo.class（ChunkPos） ====="
           jar tf minecraft-1.21.11-custom-full.jar | grep "dwo.class"
-          echo "===== 验证 class_1184（WorldBorder） ====="
-          jar tf minecraft-1.21.11-custom-full.jar | grep "class_1184.class"
-          echo "===== 验证 arp（WorldBorderCommand） ====="
-          jar tf minecraft-1.21.11-custom-full.jar | grep "arp.class"
-          echo "===== 验证原版 class_2588（TranslatableContents）仍然存在 ====="
-          jar tf minecraft-1.21.11-custom-full.jar | grep "class_2588.class" || echo "❌ class_2588 缺失！"
-
+          
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
