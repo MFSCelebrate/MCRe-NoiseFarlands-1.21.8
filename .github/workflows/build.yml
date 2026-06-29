@@ -3,6 +3,8 @@ name: Build Custom Minecraft 1.21.11
 on:
   push:
     branches: [ "main", "1.21.11" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 env:
@@ -31,6 +33,37 @@ jobs:
           CLIENT_URL=$(cat version.json | jq -r '.downloads.client.url')
           wget -O original.jar $CLIENT_URL
 
+      # ========== 新增：生成所有源文件的映射表 ==========
+      - name: 生成 net/minecraft/ 所有源文件的混淆类映射
+        run: |
+          echo "=== net/minecraft/ 所有源文件 -> 混淆类 映射 ==="
+          echo "| 源文件路径 | 混淆类 |"
+          echo "|------------|--------|"
+          
+          # 创建临时目录
+          mkdir -p temp_all
+          cd temp_all
+          jar xf ../original.jar
+          
+          # 遍历所有 class 文件，只关注 net/minecraft/ 下的
+          find net/minecraft -name "*.class" | while read -r class_file; do
+            # 提取包路径（去掉类名）
+            package_dir=$(dirname "$class_file")
+            class_name=$(basename "$class_file" .class)
+            # 提取 SourceFile
+            source_file=$(javap -v "$class_file" 2>/dev/null | grep "SourceFile" | head -1 | sed 's/.*"\(.*\)"/\1/' || echo "")
+            if [ -n "$source_file" ]; then
+              # 构造完整的源文件路径（包路径 + 源文件名）
+              source_path="$package_dir/$source_file"
+              echo "| $source_path | $class_name.class |"
+            else
+              # 如果没有 SourceFile 属性，就显示 class 的完整路径
+              echo "| $class_file (无SourceFile) | $class_name.class |"
+            fi
+          done
+          cd ..
+          rm -rf temp_all
+
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
@@ -56,30 +89,6 @@ jobs:
             exit 1
           fi
           echo "✅ modified.jar 已生成"
-
-      - name: 显示源文件到混淆类的映射
-        run: |
-          echo "=== 源文件 -> 混淆类 映射 ==="
-          mkdir -p temp_classes
-          cd temp_classes
-          jar xf ../build/libs/modified.jar
-          
-          echo "| 源文件路径 | 混淆类 |"
-          echo "|------------|--------|"
-          find . -name "*.class" | while read -r class_file; do
-            class_path="${class_file#./}"
-            package_dir=$(dirname "$class_path")
-            class_name=$(basename "$class_file" .class)
-            source_file=$(javap -v "$class_file" 2>/dev/null | grep "SourceFile" | head -1 | sed 's/.*"\(.*\)"/\1/' || echo "")
-            if [ -n "$source_file" ]; then
-              source_path="src/main/java/$package_dir/$source_file"
-              echo "| $source_path | $class_name.class |"
-            else
-              echo "| $class_path (无SourceFile) | $class_name.class |"
-            fi
-          done
-          cd ..
-          rm -rf temp_classes
 
       - name: 合并所有修改到原版 jar
         run: |
