@@ -164,7 +164,7 @@ public class LoadingOverlay extends Overlay {
    @Override
    public void tick() {
       long now = System.currentTimeMillis();
-      if (now - this.lastLogTime > 2000L) {
+      if (now - this.lastLogTime > 250L) {
          this.lastLogTime = now;
          float progress = this.reload.getActualProgress();
          LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}", progress, this.reload.isDone());
