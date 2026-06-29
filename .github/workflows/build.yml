@@ -3,8 +3,6 @@ name: Build Custom Minecraft 1.21.11
 on:
   push:
     branches: [ "main", "1.21.11" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
 
 env:
@@ -66,12 +64,19 @@ jobs:
           cd temp_classes
           jar xf ../build/libs/modified.jar
           
-          echo "| 源文件 | 混淆类 |"
-          echo "|--------|--------|"
+          echo "| 源文件路径 | 混淆类 |"
+          echo "|------------|--------|"
           find . -name "*.class" | while read -r class_file; do
+            class_path="${class_file#./}"
+            package_dir=$(dirname "$class_path")
             class_name=$(basename "$class_file" .class)
-            source_file=$(javap -v "$class_file" 2>/dev/null | grep "SourceFile" | head -1 | sed 's/.*"\(.*\)"/\1/' || echo "未知")
-            echo "| $source_file | $class_name.class |"
+            source_file=$(javap -v "$class_file" 2>/dev/null | grep "SourceFile" | head -1 | sed 's/.*"\(.*\)"/\1/' || echo "")
+            if [ -n "$source_file" ]; then
+              source_path="src/main/java/$package_dir/$source_file"
+              echo "| $source_path | $class_name.class |"
+            else
+              echo "| $class_path (无SourceFile) | $class_name.class |"
+            fi
           done
           cd ..
           rm -rf temp_classes
@@ -80,13 +85,9 @@ jobs:
         run: |
           mkdir -p merged
           cd merged
-          echo "解压原版 jar..."
           jar xf ../original.jar
-          echo "解压 modified.jar，覆盖修改的 class..."
           jar xf ../build/libs/modified.jar
-          echo "删除签名文件..."
           rm -f META-INF/*.SF META-INF/*.RSA META-INF/*.DSA
-          echo "重新打包..."
           jar cfm ../minecraft-1.21.11-custom-full.jar META-INF/MANIFEST.MF .
           cd ..
           echo "✅ 完整 jar 已生成：minecraft-1.21.11-custom-full.jar"
@@ -94,7 +95,6 @@ jobs:
       - name: 验证最终产物中的修改类
         run: |
           echo "=== 最终产物中修改类的存在情况 ==="
-          # 提取 modified.jar 中的所有 class 文件路径（相对路径）
           MODIFIED_CLASSES=$(jar tf build/libs/modified.jar | grep '\.class$')
           if [ -z "$MODIFIED_CLASSES" ]; then
             echo "⚠️ 警告: modified.jar 中没有 class 文件！"
