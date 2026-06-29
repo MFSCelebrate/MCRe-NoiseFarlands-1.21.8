@@ -1138,15 +1138,15 @@ public class Util {
    }
 
    public static <T> List<T> copyAndAdd(final List<T> list, final T element) {
-      return ImmutableList.<T>builderWithExpectedSize(list.size() + 1).addAll(list).add(element).build()
+      return ImmutableList.<T>builderWithExpectedSize(list.size() + 1).addAll(list).add(element).build();
    }
 
    public static <T> List<T> copyAndAdd(final T element, final List<T> list) {
-      return ImmutableList.<T>builderWithExpectedSize(list.size() + 1).addAll(list).add(element).build()
+      return ImmutableList.<T>builderWithExpectedSize(list.size() + 1).addAll(list).add(element).build();
    }
 
    public static <K, V> Map<K, V> copyAndPut(final Map<K, V> map, final K key, final V value) {
-      return ImmutableMap.<K, V>builderWithExpectedSize(map.size() + 1).putAll(map).put(key, value).buildKeepingLast()
+      return ImmutableMap.<K, V>builderWithExpectedSize(map.size() + 1).putAll(map).put(key, value).buildKeepingLast();
    }
 
    public enum OS {
