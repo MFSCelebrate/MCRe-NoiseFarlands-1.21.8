@@ -1121,7 +1121,7 @@ public class LevelRenderer implements ResourceManagerReloadListener, AutoCloseab
                         indexType,
                         0,
                         buffers.getIndexCount(),
-                        (sectionUbos, uploader) -> uploader.upload("ChunkSection", sectionUbos[finalUboIndex])
+                        (sectionUbos, uploader) -> uploader.upload("ChunkSection", ((Ubos[])sectionUbos)[finalUboIndex])
                      )
                   );
             }
