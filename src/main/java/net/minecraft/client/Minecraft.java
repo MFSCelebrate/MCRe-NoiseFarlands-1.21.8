@@ -2430,7 +2430,8 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    }
 
    public CompletableFuture<Void> delayTextureReload() {
-      return this.<CompletableFuture<Void>>submit(this::reloadResourcePacks).thenCompose(result -> (CompletionStage<Void>)result);
+      return this.submit(() -> this.reloadResourcePacks())
+          .thenCompose(result -> (CompletionStage<Void>) result);
    }
 
    public void updateReportEnvironment(final ReportEnvironment environment) {
