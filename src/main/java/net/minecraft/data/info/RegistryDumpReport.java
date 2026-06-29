@@ -34,7 +34,8 @@ public class RegistryDumpReport implements DataProvider {
          result.addProperty("default", defaultKey.toString());
       }
 
-      int registryId = BuiltInRegistries.REGISTRY.getId(registry);
+      // 修复：显式强制转型为 Registry<?>，解决泛型捕获转换问题
+      int registryId = BuiltInRegistries.REGISTRY.getId((Registry<?>) registry);
       result.addProperty("protocol_id", registryId);
       JsonObject entries = new JsonObject();
       registry.listElements().forEach(holder -> {
