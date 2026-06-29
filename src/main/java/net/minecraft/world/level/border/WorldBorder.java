@@ -31,7 +31,7 @@ public class WorldBorder extends SavedData {
    private int warningBlocks = 5;
    private double centerX;
    private double centerZ;
-   private int absoluteMaxSize = 2.147483646e9;
+   private int absoluteMaxSize = 2147483646;
    private WorldBorder.BorderExtent extent = new WorldBorder.StaticBorderExtent(4.294967292e9);
 
    public WorldBorder() {
