@@ -113,6 +113,7 @@ def brokenPatterns = [
     'net/minecraft/network/codec/StreamCodec.java',
     'net/minecraft/advancements/Advancement.java',
 'net/minecraft/data/recipes/packs/VanillaRecipeProvider.java',
+'net/minecraft/client/renderer/blockentity/BeaconRenderer.java',
 'net/minecraft/advancements/Criterion.java',
 'net/minecraft/advancements/criterion/EnterBlockTrigger.java',
 'net/minecraft/advancements/criterion/EntityFlagsPredicate.java',
