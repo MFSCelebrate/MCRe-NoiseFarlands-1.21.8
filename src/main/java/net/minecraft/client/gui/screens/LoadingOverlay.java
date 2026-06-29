@@ -6,6 +6,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.IntSupplier;
@@ -42,9 +43,11 @@ public class LoadingOverlay extends Overlay {
    public static final long FADE_OUT_TIME = 1000L;
    public static final long FADE_IN_TIME = 500L;
    
+   // ====== 新增日志相关 ======
    private static final Logger LOGGER = LogUtils.getLogger();
    private long lastLogTime = 0L;
-   
+   // ====== 新增结束 ======
+
    private final Minecraft minecraft;
    private final ReloadInstance reload;
    private final Consumer<Optional<Throwable>> onFinish;
@@ -157,6 +160,7 @@ public class LoadingOverlay extends Overlay {
       }
    }
 
+   // ====== 替换后的 tick() 方法 ======
    @Override
    public void tick() {
       long now = System.currentTimeMillis();
@@ -164,7 +168,27 @@ public class LoadingOverlay extends Overlay {
          this.lastLogTime = now;
          float progress = this.reload.getActualProgress();
          LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}", progress, this.reload.isDone());
+
+         // 当进度卡在 99%+ 且未完成时，打印所有线程堆栈
+         if (progress > 0.99 && !this.reload.isDone()) {
+            LOGGER.info("=== 进度卡在 99%+，打印所有线程堆栈 ===");
+            Map<Thread, StackTraceElement[]> allStacks = Thread.getAllStackTraces();
+            for (Map.Entry<Thread, StackTraceElement[]> entry : allStacks.entrySet()) {
+               Thread t = entry.getKey();
+               if (t.getName() == null) continue;
+               LOGGER.info("线程: {} (状态: {})", t.getName(), t.getState());
+               StackTraceElement[] stack = entry.getValue();
+               for (int i = 0; i < Math.min(stack.length, 30); i++) {
+                  LOGGER.info("  {}", stack[i]);
+               }
+               if (stack.length > 30) {
+                  LOGGER.info("  ... (剩余 {} 行)", stack.length - 30);
+               }
+            }
+            LOGGER.info("=== 堆栈打印结束 ===");
+         }
       }
+
       if (this.fadeOutStart == -1L && this.reload.isDone() && this.isReadyToFadeOut()) {
          try {
             this.reload.checkExceptions();
@@ -180,6 +204,7 @@ public class LoadingOverlay extends Overlay {
          }
       }
    }
+   // ====== tick() 替换结束 ======
 
    private boolean isReadyToFadeOut() {
       return !this.fadeIn || this.fadeInStart > -1L && Util.getMillis() - this.fadeInStart >= 1000L;
