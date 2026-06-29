@@ -1,0 +1,105 @@
+name: Build Custom Minecraft 1.21.11
+
+on:
+  push:
+    branches: [ "main", "1.21.11" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: 21
+  JAVA_DISTRIBUTION: temurin
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 配置 JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: 下载原版 Minecraft 1.21.11 client jar
+        run: |
+          curl -s -o version_manifest.json https://launchermeta.mojang.com/mc/game/version_manifest.json
+          VERSION_URL=$(cat version_manifest.json | jq -r '.versions[] | select(.id=="1.21.11") | .url')
+          curl -s -o version.json $VERSION_URL
+          CLIENT_URL=$(cat version.json | jq -r '.downloads.client.url')
+          wget -O original.jar $CLIENT_URL
+
+      - name: 给 gradlew 加执行权限
+        run: chmod +x ./gradlew
+
+      - name: 编译并 remap 修改后的类（保存错误上下文）
+        id: build
+        run: |
+          # 编译并输出完整日志到控制台，同时保存到 full.log
+          ./gradlew remapJar --no-daemon 2>&1 | tee full.log
+          # 提取 error: 附近前后各 2 行（可根据需要调整 -B 和 -A 参数）
+          grep -B 2 -A 5 "error:" full.log > compile_errors.log || true
+          # 删除临时完整日志（可选）
+          rm -f full.log
+        continue-on-error: true
+
+      - name: 上传编译错误日志
+        uses: actions/upload-artifact@v4
+        with:
+          name: CompileErrors
+          path: compile_errors.log
+          if-no-files-found: warn
+
+      - name: 列出构建产物（调试）
+        run: ls -la build/libs/
+
+      - name: 检查 modified.jar 是否生成
+        run: |
+          if [ ! -f build/libs/modified.jar ]; then
+            echo "错误: modified.jar 未生成！"
+            exit 1
+          fi
+          echo "modified.jar 已生成，内容如下："
+          jar tf build/libs/modified.jar
+
+      - name: 解压原版 jar
+        run: |
+          mkdir -p extracted
+          cd extracted
+          jar xf ../original.jar
+          cd ..
+
+      - name: 替换 DebugEntryVersion.class（混淆名 glv.class）
+        run: |
+          mkdir -p temp_unzip
+          cd temp_unzip
+          jar xf ../build/libs/modified.jar
+          echo "解压 modified.jar 后的内容："
+          ls -la
+          if [ -f glv.class ]; then
+            cp glv.class ../extracted/
+            echo "glv.class 已复制到 extracted/"
+          else
+            echo "错误：modified.jar 中未找到 glv.class"
+            exit 1
+          fi
+          cd ..
+
+      - name: 重新打包完整 jar（移除签名）
+        run: |
+          cd extracted
+          # 删除 Mojang 的签名文件
+          rm -f META-INF/*.SF META-INF/*.RSA META-INF/*.DSA
+          jar cfm ../minecraft-1.21.11-custom-full.jar META-INF/MANIFEST.MF .
+          cd ..
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minecraft-1.21.11-Custom
+          path: minecraft-1.21.11-custom-full.jar
+          if-no-files-found: error

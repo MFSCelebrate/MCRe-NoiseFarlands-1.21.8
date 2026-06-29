@@ -1,0 +1,71 @@
+plugins {
+    id 'java'
+    id 'fabric-loom' version '1.15-SNAPSHOT'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    
+    // 改为 implementation，确保编译时可用
+    implementation 'org.jspecify:jspecify:1.0.0'
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    // 如果还缺少其他库，可以在此添加
+     compileOnly 'com.google.guava:guava:33.2.0-jre'
+     compileOnly 'org.apache.logging.log4j:log4j-api:2.22.1'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+// ========== 解除编译错误/警告数量限制 ==========
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xmaxerrs' << '10000'
+    options.compilerArgs << '-Xmaxwarns' << '10000'
+    // 如果内存不足，可以增加编译内存
+    options.fork = true
+    options.forkOptions.jvmArgs = ['-Xmx4G']
+}
+
+// ========== 全量编译所有源码 ==========
+sourceSets {
+    main {
+        java {
+            include 'net/minecraft/client/gui/components/debug/DebugEntryVersion.java'
+            include 'net/minecraft/world/level/ChunkPos.java'
+            include 'net/minecraft/server/network/ServerGamePacketListenerImpl.java'
+            include 'net/minecraft/world/entity/Entity.java'
+            include 'net/minecraft/server/MinecraftServer.java'
+            include 'net/minecraft/server/commands/ForceLoadCommand.java'
+            include 'net/minecraft/server/dedicated/DedicatedServerProperties.java'
+            include 'net/minecraft/world/level/Level.java'
+            include 'net/minecraft/world/level/LevelReader.java'
+            include 'net/minecraft/world/level/border/WorldBorder.java'
+            include 'net/minecraft/server/commands/WorldBorderCommand.java'
+            // 如果你想排除某些特别顽固的文件，可以在这里添加 exclude
+            // exclude 'net/minecraft/resource/NamespaceResourceManager.java'
+            // exclude 'net/minecraft/server/network/ChunkDataSender.java'
+        }
+    }
+}
+
+// ========== remap 任务 ==========
+tasks.remapJar {
+    targetNamespace = 'official'
+    archiveFileName.set('modified.jar')
+    manifest {
+        attributes 'Main-Class': 'net.minecraft.client.main.Main'
+    }
+}
+
+// 让 build 任务依赖 remapJar
+tasks.build {
+    dependsOn tasks.remapJar
+}
