@@ -35,6 +35,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.datafixers.DataFixUtils;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.lang.management.GarbageCollectorMXBean;
@@ -463,7 +464,9 @@ public class DebugHud {
             if (serverWorld == null) {
                 return null;
             }
-            this.chunkFuture = serverWorld.getChunkManager().getChunkFutureSyncOnMainThread(this.pos.x, this.pos.z, ChunkStatus.FULL, false).thenApply(chunk -> chunk.orElse(null));
+            this.chunkFuture = serverWorld.getChunkManager()
+    .getChunkFutureSyncOnMainThread(this.pos.x, this.pos.z, ChunkStatus.FULL, false)
+    .thenApply(chunk -> (WorldChunk) chunk.orElse(null));
         }
         return this.chunkFuture.getNow(null);
     }
