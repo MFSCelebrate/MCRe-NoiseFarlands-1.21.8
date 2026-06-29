@@ -153,6 +153,7 @@ public class LoadingOverlay extends Overlay {
 
    @Override
    public void tick() {
+      LOGGER.info("LoadingOverlay 进度: {} / {}", this.progress, this.total);
       if (this.fadeOutStart == -1L && this.reload.isDone() && this.isReadyToFadeOut()) {
          try {
             this.reload.checkExceptions();
