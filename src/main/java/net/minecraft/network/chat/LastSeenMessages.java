@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.function.IntFunction;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.network.FriendlyByteBuf;
@@ -42,7 +43,7 @@ public record LastSeenMessages(List<MessageSignature> entries) {
       public static final LastSeenMessages.Packed EMPTY = new LastSeenMessages.Packed(List.of());
 
       public Packed(final FriendlyByteBuf input) {
-    this(input.readCollection(ArrayList::new, MessageSignature.Packed::read));
+    this(input.readCollection((IntFunction<List<MessageSignature.Packed>>) ArrayList::new, MessageSignature.Packed::read));
       }
 
       public void write(final FriendlyByteBuf output) {
