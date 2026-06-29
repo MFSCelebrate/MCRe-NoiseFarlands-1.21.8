@@ -58,39 +58,54 @@ jobs:
             exit 1
           fi
           echo "✅ modified.jar 已生成"
-          echo "包含的 class 文件："
-          jar tf build/libs/modified.jar | grep '\.class$' || echo "（无 class 文件）"
 
+      # ========== 新增：列出 modified.jar 中的 class ==========
+      - name: 列出 modified.jar 中的 class 文件
+        run: |
+          echo "=== modified.jar 中的 class 文件 ==="
+          jar tf build/libs/modified.jar | grep '\.class$' || echo "（无 class 文件）"
+          echo ""
+          echo "=== 总 class 文件数 ==="
+          jar tf build/libs/modified.jar | grep '\.class$' | wc -l
+
+      # ========== 合并所有修改到原版 jar ==========
       - name: 合并所有修改到原版 jar
         run: |
-          # 创建临时目录
           mkdir -p merged
           cd merged
-          
-          # 1. 解压原版 jar（所有 class）
+          # 1. 解压原版 jar
           echo "解压原版 jar..."
           jar xf ../original.jar
-          
           # 2. 解压 modified.jar，覆盖修改的 class
           echo "解压 modified.jar，覆盖修改的 class..."
           jar xf ../build/libs/modified.jar
-          
-          # 3. 删除签名文件（避免 SecurityException）
+          # 3. 删除签名文件
           echo "删除签名文件..."
           rm -f META-INF/*.SF META-INF/*.RSA META-INF/*.DSA
-          
-          # 4. 重新打包成完整 jar
+          # 4. 重新打包
           echo "重新打包..."
           jar cfm ../minecraft-1.21.11-custom-full.jar META-INF/MANIFEST.MF .
-          
           cd ..
           echo "✅ 完整 jar 已生成：minecraft-1.21.11-custom-full.jar"
+
+      # ========== 新增：验证最终产物中的修改类 ==========
+      - name: 验证最终产物中的修改类
+        run: |
+          echo "=== 最终产物中修改类的存在情况 ==="
+          # 列出所有可能修改的 class（根据 build.gradle 中的 include）
+          for class in glv gnd class_2375 class_2919 class_1293 class_1254 class_1764 class_2692 class_1164 class_1175 class_1184 class_1765; do
+            if jar tf minecraft-1.21.11-custom-full.jar | grep -q "net/minecraft/.*/${class}\.class"; then
+              echo "✅ $class 存在"
+            else
+              echo "❌ $class 不存在"
+            fi
+          done
 
       - name: 验证最终产物
         run: |
           echo "=== 最终产物大小 ==="
           ls -lh minecraft-1.21.11-custom-full.jar
-          echo "=== 包含的 class 文件数量 ==="
+          echo "=== 包含的 class 文件总数 ==="
           jar tf minecraft-1.21.11-custom-full.jar | grep '\.class$' | wc -l
 
       - name: 上传构建产物
