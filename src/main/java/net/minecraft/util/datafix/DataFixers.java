@@ -643,9 +643,7 @@ public class DataFixers {
                Type<?> entityType = this.getInputSchema().getType(References.ENTITY);
                OpticFinder<String> idFinder = DSL.fieldFinder("id", NamespacedSchema.namespacedString());
                OpticFinder<?> customNameFinder = entityType.findField("CustomName");
-               OpticFinder<Pair<String, String>> componentFinder = DSL.typeFinder(
-    (Type<Pair<String, String>>) this.getInputSchema().getType(References.TEXT_COMPONENT)
-);
+               OpticFinder<Pair<String, String>> componentFinder = DSL.typeFinder(this.getInputSchema().getType(References.TEXT_COMPONENT));
                return this.fixTypeEverywhereTyped(
                   "Command block minecart custom name fix",
                   entityType,
@@ -891,7 +889,7 @@ public class DataFixers {
                   .put("generic.attackKnockback", "minecraft:generic.attack_knockback")
                   .put("generic.attackSpeed", "minecraft:generic.attack_speed")
                   .put("generic.armorToughness", "minecraft:generic.armor_toughness")
-                   .build();
+                  .build()
             )
          )
       );
@@ -986,16 +984,16 @@ public class DataFixers {
          .put("minecraft:waxed_lightly_weathered_cut_copper_stairs", "minecraft:waxed_exposed_cut_copper_stairs")
          .put("minecraft:waxed_semi_weathered_cut_copper_slab", "minecraft:waxed_weathered_cut_copper_slab")
          .put("minecraft:waxed_lightly_weathered_cut_copper_slab", "minecraft:waxed_exposed_cut_copper_slab")
-          .build();
+         .build();
       fixerUpper.addFixer(ItemRenameFix.create(v2690, "Renamed copper block items to new oxidized terms", createRenamer(copperBlocksToRename)));
       fixerUpper.addFixer(BlockRenameFix.create(v2690, "Renamed copper blocks to new oxidized terms", createRenamer(copperBlocksToRename)));
       Schema v2691 = fixerUpper.addSchema(2691, SAME_NAMESPACED);
-      ImmutableMap<String, String> waxedCopperRename = ImmutableMap.builder()
+      ImmutableMap<String, String> waxedCopperRename = ImmutableMap.<String, String>builder()
          .put("minecraft:waxed_copper", "minecraft:waxed_copper_block")
          .put("minecraft:oxidized_copper_block", "minecraft:oxidized_copper")
          .put("minecraft:weathered_copper_block", "minecraft:weathered_copper")
          .put("minecraft:exposed_copper_block", "minecraft:exposed_copper")
-         ImmutableMap.<String, String>builder()
+         .build();
       fixerUpper.addFixer(ItemRenameFix.create(v2691, "Rename copper item suffixes", createRenamer(waxedCopperRename)));
       fixerUpper.addFixer(BlockRenameFix.create(v2691, "Rename copper blocks suffixes", createRenamer(waxedCopperRename)));
       Schema v2693 = fixerUpper.addSchema(2693, SAME_NAMESPACED);
@@ -1019,7 +1017,7 @@ public class DataFixers {
          .put("minecraft:grimstone_brick_stairs", "minecraft:deepslate_brick_stairs")
          .put("minecraft:grimstone_brick_wall", "minecraft:deepslate_brick_wall")
          .put("minecraft:chiseled_grimstone", "minecraft:chiseled_deepslate")
-          .build();
+         .build();
       fixerUpper.addFixer(ItemRenameFix.create(v2696, "Renamed grimstone block items to deepslate", createRenamer(grimstoneBlocksToRename)));
       fixerUpper.addFixer(BlockRenameFix.create(v2696, "Renamed grimstone blocks to deepslate", createRenamer(grimstoneBlocksToRename)));
       Schema v2700 = fixerUpper.addSchema(2700, SAME_NAMESPACED);
@@ -1135,14 +1133,13 @@ public class DataFixers {
                   .put("minecraft:shulker_close", "minecraft:container_close")
                   .put("minecraft:shulker_open", "minecraft:container_open")
                   .put("minecraft:wolf_shaking", "minecraft:entity_shake")
-                   .build();
+                  .build()
             )
          )
       );
       Schema v3086 = fixerUpper.addSchema(3086, SAME_NAMESPACED);
       fixerUpper.addFixer(
-         new EntityVariantFix(v3086, "Change cat variant type", References.ENTITY, "minecraft:cat", "CatType", 
-                              Util.make(new Int2ObjectOpenHashMap(), m -> {
+         new EntityVariantFix(v3086, "Change cat variant type", References.ENTITY, "minecraft:cat", "CatType", Util.make(new Int2ObjectOpenHashMap(), m -> {
             m.defaultReturnValue("minecraft:tabby");
             m.put(0, "minecraft:tabby");
             m.put(1, "minecraft:black");
@@ -1169,7 +1166,7 @@ public class DataFixers {
          .put("textures/entity/cat/white.png", "minecraft:white")
          .put("textures/entity/cat/jellie.png", "minecraft:jellie")
          .put("textures/entity/cat/all_black.png", "minecraft:all_black")
-          .build();
+         .build();
       fixerUpper.addFixer(
          new CriteriaRenameFix(
             v3086, "Migrate cat variant advancement", "minecraft:husbandry/complete_catalogue", s -> (String)catAdvancementMigrationMap.getOrDefault(s, s)
@@ -1585,3 +1582,4 @@ public class DataFixers {
       return id -> Objects.equals(NamespacedSchema.ensureNamespaced(id), from) ? to : id;
    }
 }
+
