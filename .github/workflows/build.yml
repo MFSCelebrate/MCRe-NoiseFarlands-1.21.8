@@ -32,6 +32,7 @@ jobs:
           curl -s -o version.json $VERSION_URL
           CLIENT_URL=$(cat version.json | jq -r '.downloads.client.url')
           wget -O original.jar $CLIENT_URL
+
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
@@ -57,13 +58,24 @@ jobs:
             exit 1
           fi
           echo "✅ modified.jar 已生成"
-      - name: 列出 modified.jar 中的 class 文件
+
+      - name: 显示源文件到混淆类的映射
         run: |
-          echo "=== modified.jar 中的 class 文件 ==="
-          jar tf build/libs/modified.jar | grep '\.class$' || echo "（无 class 文件）"
-          echo ""
-          echo "=== 总 class 文件数 ==="
-          jar tf build/libs/modified.jar | grep '\.class$' | wc -l
+          echo "=== 源文件 -> 混淆类 映射 ==="
+          mkdir -p temp_classes
+          cd temp_classes
+          jar xf ../build/libs/modified.jar
+          
+          echo "| 源文件 | 混淆类 |"
+          echo "|--------|--------|"
+          find . -name "*.class" | while read -r class_file; do
+            class_name=$(basename "$class_file" .class)
+            source_file=$(javap -v "$class_file" 2>/dev/null | grep "SourceFile" | head -1 | sed 's/.*"\(.*\)"/\1/' || echo "未知")
+            echo "| $source_file | $class_name.class |"
+          done
+          cd ..
+          rm -rf temp_classes
+
       - name: 合并所有修改到原版 jar
         run: |
           mkdir -p merged
@@ -78,24 +90,38 @@ jobs:
           jar cfm ../minecraft-1.21.11-custom-full.jar META-INF/MANIFEST.MF .
           cd ..
           echo "✅ 完整 jar 已生成：minecraft-1.21.11-custom-full.jar"
+
       - name: 验证最终产物中的修改类
         run: |
           echo "=== 最终产物中修改类的存在情况 ==="
-          # 定义混淆类名列表（不带路径）
-          CLASSES="glv gnd class_2375 class_2919 class_1293 class_1254 class_1764 class_2692 class_1164 class_1175 class_1184 class_1765"
-          for class in $CLASSES; do
-            if jar tf minecraft-1.21.11-custom-full.jar | grep -q "/${class}\.class"; then
-              echo "✅ $class 存在"
+          # 提取 modified.jar 中的所有 class 文件路径（相对路径）
+          MODIFIED_CLASSES=$(jar tf build/libs/modified.jar | grep '\.class$')
+          if [ -z "$MODIFIED_CLASSES" ]; then
+            echo "⚠️ 警告: modified.jar 中没有 class 文件！"
+            exit 0
+          fi
+          MISSING=0
+          while IFS= read -r class_path; do
+            if jar tf minecraft-1.21.11-custom-full.jar | grep -q "^${class_path}$"; then
+              echo "✅ $class_path 存在"
             else
-              echo "❌ $class 不存在"
+              echo "❌ $class_path 不存在"
+              MISSING=$((MISSING+1))
             fi
-          done
+          done <<< "$MODIFIED_CLASSES"
+          if [ $MISSING -gt 0 ]; then
+            echo "⚠️ 共有 $MISSING 个 class 缺失"
+          else
+            echo "🎉 所有修改的 class 都已成功注入"
+          fi
+
       - name: 验证最终产物
         run: |
           echo "=== 最终产物大小 ==="
           ls -lh minecraft-1.21.11-custom-full.jar
           echo "=== 包含的 class 文件总数 ==="
           jar tf minecraft-1.21.11-custom-full.jar | grep '\.class$' | wc -l
+
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
