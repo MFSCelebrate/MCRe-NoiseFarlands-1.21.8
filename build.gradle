@@ -10,7 +10,7 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
+   mappings loom.intermediary()
     
     // ========== 从 library.txt 提取的所有第三方依赖 ==========
     // 核心工具库
