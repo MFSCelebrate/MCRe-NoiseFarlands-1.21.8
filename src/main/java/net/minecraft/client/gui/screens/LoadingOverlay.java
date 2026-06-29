@@ -3,6 +3,7 @@ package net.minecraft.client.gui.screens;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.logging.LogUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -22,9 +23,8 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
-import org.slf4j.Logger;
-import com.mojang.logging.LogUtils;
 import net.minecraft.util.Util;
+import org.slf4j.Logger;
 
 public class LoadingOverlay extends Overlay {
    public static final Identifier MOJANG_STUDIOS_LOGO_LOCATION = Identifier.withDefaultNamespace("textures/gui/title/mojangstudios.png");
@@ -34,7 +34,6 @@ public class LoadingOverlay extends Overlay {
       ? LOGO_BACKGROUND_COLOR_DARK
       : LOGO_BACKGROUND_COLOR;
    private static final int LOGO_SCALE = 240;
-   private static final Logger LOGGER = LogUtils.getLogger();
    private static final float LOGO_QUARTER_FLOAT = 60.0F;
    private static final int LOGO_QUARTER = 60;
    private static final int LOGO_HALF = 120;
@@ -42,6 +41,10 @@ public class LoadingOverlay extends Overlay {
    private static final float SMOOTHING = 0.95F;
    public static final long FADE_OUT_TIME = 1000L;
    public static final long FADE_IN_TIME = 500L;
+   
+   private static final Logger LOGGER = LogUtils.getLogger();
+   private long lastLogTime = 0L;
+   
    private final Minecraft minecraft;
    private final ReloadInstance reload;
    private final Consumer<Optional<Throwable>> onFinish;
@@ -155,27 +158,29 @@ public class LoadingOverlay extends Overlay {
    }
 
    @Override
-public void tick() {
-    long now = System.currentTimeMillis();
-    if (now - this.lastLogTime > 250) { // 每 2 秒打印一次
-        this.lastLogTime = now;
-        float progress = this.reload.getActualProgress();
-        LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}", progress, this.reload.isDone());
-    }
-    if (this.fadeOutStart == -1L && this.reload.isDone() && this.isReadyToFadeOut()) {
-        try {
+   public void tick() {
+      long now = System.currentTimeMillis();
+      if (now - this.lastLogTime > 2000L) {
+         this.lastLogTime = now;
+         float progress = this.reload.getActualProgress();
+         LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}", progress, this.reload.isDone());
+      }
+      if (this.fadeOutStart == -1L && this.reload.isDone() && this.isReadyToFadeOut()) {
+         try {
             this.reload.checkExceptions();
             this.onFinish.accept(Optional.empty());
-        } catch (Throwable t) {
+         } catch (Throwable t) {
             this.onFinish.accept(Optional.of(t));
-        }
-        this.fadeOutStart = Util.getMillis();
-        if (this.minecraft.screen != null) {
+         }
+
+         this.fadeOutStart = Util.getMillis();
+         if (this.minecraft.screen != null) {
             Window window = this.minecraft.getWindow();
             this.minecraft.screen.init(window.getGuiScaledWidth(), window.getGuiScaledHeight());
-        }
-    }
-}
+         }
+      }
+   }
+
    private boolean isReadyToFadeOut() {
       return !this.fadeIn || this.fadeInStart > -1L && Util.getMillis() - this.fadeInStart >= 1000L;
    }
