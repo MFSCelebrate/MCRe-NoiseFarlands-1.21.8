@@ -36,48 +36,38 @@ jobs:
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
-      - name: 编译并 remap 修改后的类（只编译 11 个核心类）
-        id: build
+      - name: 编译并 remap（生成 modified.jar，包含混淆后的 class）
         run: |
-          # 编译并输出日志
           ./gradlew remapJar --no-daemon 2>&1 | tee full.log
-          # 提取错误信息（如果有）
           grep -B 2 -A 5 "error:" full.log > compile_errors.log || true
           rm -f full.log
         continue-on-error: true
 
-      - name: 上传编译错误日志（如果有）
+      - name: 上传编译错误日志
         uses: actions/upload-artifact@v4
         with:
           name: CompileErrors
           path: compile_errors.log
           if-no-files-found: warn
 
-      - name: 检查 modified.jar 是否生成
+      - name: 查看 modified.jar 内容（确认混淆名）
         run: |
-          if [ ! -f build/libs/modified.jar ]; then
-            echo "错误: modified.jar 未生成！"
-            exit 1
-          fi
-          echo "modified.jar 已生成，内容如下："
-          jar tf build/libs/modified.jar
-
-      - name: 准备合并目录
-        run: |
-          rm -rf extracted
-          mkdir -p extracted
+          echo "===== modified.jar 中的类（Mojang 混淆名） ====="
+          jar tf build/libs/modified.jar | grep -E "\.class$" | head -30
 
       - name: 解压原版 jar
         run: |
+          rm -rf extracted
+          mkdir -p extracted
           cd extracted
           jar xf ../original.jar
           cd ..
 
-      - name: 合并 modified.jar 中的所有类（覆盖同路径）
+      - name: 用 modified.jar 覆盖原版中的同名类（全量解压覆盖）
         run: |
           cd extracted
           jar xf ../build/libs/modified.jar
-          # 删除 Mojang 签名文件（防止签名校验失败）
+          # 删除签名文件（防止校验失败）
           rm -f META-INF/*.SF META-INF/*.RSA META-INF/*.DSA
           cd ..
 
@@ -87,14 +77,18 @@ jobs:
           jar cfm ../minecraft-1.21.11-custom-full.jar META-INF/MANIFEST.MF .
           cd ..
 
-      - name: 验证最终产物（关键类检查）
+      - name: 验证关键类是否被正确覆盖
         run: |
-          echo "===== 验证修改的类是否存在 ====="
-          jar tf minecraft-1.21.11-custom-full.jar | grep -E "glv|class_1184|arp" | head -20 || echo "⚠️ 未找到修改的类？"
-          echo "===== 验证原版关键类是否存在（class_2588 = TranslatableContents） ====="
-          jar tf minecraft-1.21.11-custom-full.jar | grep class_2588 || echo "❌ class_2588 缺失！"
-          echo "===== 验证 WorldBorder 相关类 ====="
-          jar tf minecraft-1.21.11-custom-full.jar | grep -i "worldborder" | head -10 || echo "⚠️ 未找到 WorldBorder 类？"
+          echo "===== 验证 glv.class（DebugEntryVersion） ====="
+          jar tf minecraft-1.21.11-custom-full.jar | grep "glv.class"
+          echo "===== 验证 dwo.class（ChunkPos） ====="
+          jar tf minecraft-1.21.11-custom-full.jar | grep "dwo.class"
+          echo "===== 验证 class_1184（WorldBorder） ====="
+          jar tf minecraft-1.21.11-custom-full.jar | grep "class_1184.class"
+          echo "===== 验证 arp（WorldBorderCommand） ====="
+          jar tf minecraft-1.21.11-custom-full.jar | grep "arp.class"
+          echo "===== 验证原版 class_2588（TranslatableContents）仍然存在 ====="
+          jar tf minecraft-1.21.11-custom-full.jar | grep "class_2588.class" || echo "❌ class_2588 缺失！"
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
