@@ -643,7 +643,9 @@ public class DataFixers {
                Type<?> entityType = this.getInputSchema().getType(References.ENTITY);
                OpticFinder<String> idFinder = DSL.fieldFinder("id", NamespacedSchema.namespacedString());
                OpticFinder<?> customNameFinder = entityType.findField("CustomName");
-               OpticFinder<Pair<String, String>> componentFinder = DSL.typeFinder(this.getInputSchema().getType(References.TEXT_COMPONENT));
+               OpticFinder<Pair<String, String>> componentFinder = DSL.typeFinder(
+    (Type<Pair<String, String>>) (Type<?>) this.getInputSchema().getType(References.TEXT_COMPONENT)
+);
                return this.fixTypeEverywhereTyped(
                   "Command block minecart custom name fix",
                   entityType,
@@ -1152,6 +1154,8 @@ public class DataFixers {
             m.put(8, "minecraft:white");
             m.put(9, "minecraft:jellie");
             m.put(10, "minecraft:all_black");
+
+            return m;
          })::get)
       );
       ImmutableMap<String, String> catAdvancementMigrationMap = ImmutableMap.<String, String>builder()
@@ -1166,6 +1170,8 @@ public class DataFixers {
          .put("textures/entity/cat/white.png", "minecraft:white")
          .put("textures/entity/cat/jellie.png", "minecraft:jellie")
          .put("textures/entity/cat/all_black.png", "minecraft:all_black")
+
+         return m;
          .build();
       fixerUpper.addFixer(
          new CriteriaRenameFix(
