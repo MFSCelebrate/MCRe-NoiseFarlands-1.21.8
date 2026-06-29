@@ -2089,7 +2089,7 @@ public abstract class Entity implements Nameable, EntityAccess, ScoreHolder, Syn
             this.hasVisualFire = input.getBooleanOr("HasVisualFire", false);
             this.customData = input.<CustomData>read("data", CustomData.CODEC).orElse(CustomData.EMPTY);
             this.tags.clear();
-            input.<List<String>>read("Tags", TAG_LIST_CODEC).ifPresent(this.tags::addAll)
+            input.<List<String>>read("Tags", TAG_LIST_CODEC).ifPresent(this.tags::addAll);
    // 不需要额外操作
             
             this.readAdditionalSaveData(input);
