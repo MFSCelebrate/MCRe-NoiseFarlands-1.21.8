@@ -156,12 +156,12 @@ public class LoadingOverlay extends Overlay {
 
    @Override
 public void tick() {
-    // 添加诊断日志
-    if (this.minecraft.clientTickCount % 100 == 0) {
+    long now = System.currentTimeMillis();
+    if (now - this.lastLogTime > 250) { // 每 2 秒打印一次
+        this.lastLogTime = now;
         float progress = this.reload.getActualProgress();
         LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}", progress, this.reload.isDone());
     }
-    
     if (this.fadeOutStart == -1L && this.reload.isDone() && this.isReadyToFadeOut()) {
         try {
             this.reload.checkExceptions();
@@ -169,7 +169,6 @@ public void tick() {
         } catch (Throwable t) {
             this.onFinish.accept(Optional.of(t));
         }
-
         this.fadeOutStart = Util.getMillis();
         if (this.minecraft.screen != null) {
             Window window = this.minecraft.getWindow();
@@ -177,7 +176,6 @@ public void tick() {
         }
     }
 }
-
    private boolean isReadyToFadeOut() {
       return !this.fadeIn || this.fadeInStart > -1L && Util.getMillis() - this.fadeInStart >= 1000L;
    }
