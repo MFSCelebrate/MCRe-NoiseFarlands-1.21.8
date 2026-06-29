@@ -12,13 +12,77 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     
-    // 改为 implementation，确保编译时可用
-    implementation 'org.jspecify:jspecify:1.0.0'
-    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    // ========== 从 library.txt 提取的所有第三方依赖 ==========
+    // 核心工具库
+    implementation 'it.unimi.dsi:fastutil:8.5.18'
+    implementation 'com.google.guava:guava:33.5.0-jre'
+    implementation 'com.google.code.gson:gson:2.13.2'
+    implementation 'com.google.guava:failureaccess:1.0.3'
+    
+    // 网络库
+    implementation 'io.netty:netty-buffer:4.2.7.Final'
+    implementation 'io.netty:netty-codec-base:4.2.7.Final'
+    implementation 'io.netty:netty-codec-compression:4.2.7.Final'
+    implementation 'io.netty:netty-codec-http:4.2.7.Final'
+    implementation 'io.netty:netty-common:4.2.7.Final'
+    implementation 'io.netty:netty-handler:4.2.7.Final'
+    implementation 'io.netty:netty-resolver:4.2.7.Final'
+    implementation 'io.netty:netty-transport:4.2.7.Final'
+    implementation 'io.netty:netty-transport-classes-epoll:4.2.7.Final'
+    implementation 'io.netty:netty-transport-classes-kqueue:4.2.7.Final'
+    implementation 'io.netty:netty-transport-native-unix-common:4.2.7.Final'
+    // 注意：Netty 原生库（epoll/kqueue）通常由启动器加载，这里只加公共库
+    
+    // Mojang 官方库
+    implementation 'com.mojang:authlib:7.0.61'
+    implementation 'com.mojang:blocklist:1.0.10'
+    implementation 'com.mojang:brigadier:1.3.10'
+    implementation 'com.mojang:datafixerupper:9.0.19'
+    implementation 'com.mojang:logging:1.6.11'
+    implementation 'com.mojang:patchy:2.2.10'
+    implementation 'com.mojang:text2speech:1.18.11'
+    implementation 'com.mojang:jtracy:1.0.37'  // 核心jar，natives部分由启动器处理
+    
+    // 日志库
+    implementation 'org.apache.logging.log4j:log4j-api:2.25.2'
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.2'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+    
+    // 通用工具库
+    implementation 'commons-codec:commons-codec:1.19.0'
+    implementation 'commons-io:commons-io:2.20.0'
+    implementation 'org.apache.commons:commons-compress:1.28.0'
+    implementation 'org.apache.commons:commons-lang3:3.19.0'
+    implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
+    implementation 'org.joml:joml:1.10.8'
+    implementation 'org.jcraft:jorbis:0.0.17'
+    
+    // JNA
+    implementation 'net.java.dev.jna:jna:5.17.0'
+    implementation 'net.java.dev.jna:jna-platform:5.17.0'
+    
+    // 微软 Azure / OSHI
+    implementation 'com.microsoft.azure:msal4j:1.23.1'
+    implementation 'com.github.oshi:oshi-core:6.9.0'
+    implementation 'com.azure:azure-json:1.4.0'
+    implementation 'com.ibm.icu:icu4j:77.1'
+    
+    // LWJGL 系列（排除 natives，由启动器加载）
+    implementation 'org.lwjgl:lwjgl:3.3.3'
+    implementation 'org.lwjgl:lwjgl-freetype:3.3.3'
+    implementation 'org.lwjgl:lwjgl-glfw:3.3.3'
+    implementation 'org.lwjgl:lwjgl-jemalloc:3.3.3'
+    implementation 'org.lwjgl:lwjgl-openal:3.3.3'
+    implementation 'org.lwjgl:lwjgl-opengl:3.3.3'
+    implementation 'org.lwjgl:lwjgl-stb:3.3.3'
+    implementation 'org.lwjgl:lwjgl-tinyfd:3.3.3'
+    
+    // 其他
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    // 如果还缺少其他库，可以在此添加
-     compileOnly 'com.google.guava:guava:33.2.0-jre'
-     compileOnly 'org.apache.logging.log4j:log4j-api:2.22.1'
+    implementation 'at.yawk.lz4:lz4-java:1.8.1'
+    implementation 'org.jspecify:jspecify:1.0.0'       // 已有，重复但无害
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
 }
 
 java {
@@ -26,16 +90,21 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-// ========== 解除编译错误/警告数量限制 ==========
+// ========== 编译配置 ==========
 tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
     options.compilerArgs << '-Xmaxerrs' << '10000'
     options.compilerArgs << '-Xmaxwarns' << '10000'
-    // 如果内存不足，可以增加编译内存
     options.fork = true
     options.forkOptions.jvmArgs = ['-Xmx4G']
 }
 
-// ========== 全量编译所有源码 ==========
+// ========== 资源处理（避免重复） ==========
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// ========== sourceSets：只编译修改的类 ==========
 sourceSets {
     main {
         java {
@@ -50,14 +119,11 @@ sourceSets {
             include 'net/minecraft/world/level/LevelReader.java'
             include 'net/minecraft/world/level/border/WorldBorder.java'
             include 'net/minecraft/server/commands/WorldBorderCommand.java'
-            // 如果你想排除某些特别顽固的文件，可以在这里添加 exclude
-            // exclude 'net/minecraft/resource/NamespaceResourceManager.java'
-            // exclude 'net/minecraft/server/network/ChunkDataSender.java'
         }
     }
 }
 
-// ========== remap 任务 ==========
+// ========== 打包修改的类为 modified.jar ==========
 tasks.remapJar {
     targetNamespace = 'official'
     archiveFileName.set('modified.jar')
@@ -66,7 +132,7 @@ tasks.remapJar {
     }
 }
 
-// 让 build 任务依赖 remapJar
+// 让 build 依赖 remapJar
 tasks.build {
     dependsOn tasks.remapJar
 }
