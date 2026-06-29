@@ -89,16 +89,13 @@ public class EntityRenderDispatcher implements ResourceManagerReloadListener {
    }
 
    public <T extends Entity> EntityRenderer<? super T, ?> getRenderer(final T entity) {
-      return switch (entity) {
-         
-// 方案二（临时）：拆分switch，分别处理
-case AbstractClientPlayer player -> {
-    AvatarRenderer<AbstractClientPlayer> renderer = (AvatarRenderer<AbstractClientPlayer>) this.playerRenderers.get(player.getPlayerModelType());
-    return renderer;
+// 将整个 switch 表达式改回原来的 if-else 或简单调用
+// 找到该方法（可能是 getRenderer(Entity)）中的这部分：
+if (entity instanceof AbstractClientPlayer player) {
+    return this.getAvatarRenderer(this.playerRenderers, player);
 }
-case ClientMannequin mannequin -> {
-    AvatarRenderer<ClientMannequin> renderer = (AvatarRenderer<ClientMannequin>) this.mannequinRenderers.get(mannequin.getPlayerModelType());
-    return renderer;
+if (entity instanceof ClientMannequin mannequin) {
+    return this.getAvatarRenderer(this.mannequinRenderers, mannequin);
 }
          default -> (EntityRenderer)this.renderers.get(entity.getType());
       };
