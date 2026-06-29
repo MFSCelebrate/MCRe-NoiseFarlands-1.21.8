@@ -122,7 +122,7 @@ sourceSets {
             include 'net/minecraft/world/level/border/WorldBorder.java'
             include 'net/minecraft/server/commands/WorldBorderCommand.java'
             include 'net/minecraft/world/entity/LivingEntity.java'
-            include 'net/minecraft/server/**'
+            include 'net/minecraft/world/entity/Avatar.java'
             
         }
     }
