@@ -912,7 +912,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
    }
 
    @Override
-   protected boolean pollTask() {
+   public boolean pollTask() {
       boolean mayHaveMoreTasks = this.pollTaskInternal();
       this.mayHaveDelayedTasks = mayHaveMoreTasks;
       return mayHaveMoreTasks;
@@ -934,7 +934,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
       return false;
    }
 
-   protected void doRunTask(final TickTask task) {
+   public void doRunTask(final TickTask task) {
       Profiler.get().incrementCounter("runTask");
       super.doRunTask(task);
    }
