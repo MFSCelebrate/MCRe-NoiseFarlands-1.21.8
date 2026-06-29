@@ -110,6 +110,7 @@ sourceSets {
         java {
             include 'net/minecraft/client/gui/components/debug/DebugEntryVersion.java'
             include 'net/minecraft/world/level/ChunkPos.java'
+            include 'net/minecraft/world/entity/ContainerUser.java'
             include 'net/minecraft/server/network/ServerGamePacketListenerImpl.java'
             include 'net/minecraft/world/entity/Entity.java'
             include 'net/minecraft/server/MinecraftServer.java'
