@@ -111,8 +111,8 @@ def brokenPatterns = [
     'net/minecraft/util/Util.java',
     'net/minecraft/util/datafix/DataFixers.java',
     'net/minecraft/network/codec/StreamCodec.java'
-    'net/minecraft/advancements/Advancement.java'
-'net/minecraft/advancements/Criterion.java'
+    'net/minecraft/advancements/Advancement.java',
+'net/minecraft/advancements/Criterion.java',
 'net/minecraft/advancements/criterion/EnterBlockTrigger.java'
 'net/minecraft/advancements/criterion/EntityFlagsPredicate.java'
 'net/minecraft/advancements/criterion/MinMaxBounds.java'
