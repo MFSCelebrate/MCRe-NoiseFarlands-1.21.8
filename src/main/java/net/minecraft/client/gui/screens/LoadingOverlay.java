@@ -162,33 +162,24 @@ public class LoadingOverlay extends Overlay {
 
    // ====== 替换后的 tick() 方法 ======
    @Override
-   public void tick() {
-      long now = System.currentTimeMillis();
-      if (now - this.lastLogTime > 250L) {
-         this.lastLogTime = now;
-         float progress = this.reload.getActualProgress();
-         LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}", progress, this.reload.isDone());
-
-         // 当进度卡在 99%+ 且未完成时，打印所有线程堆栈
-         if (progress > 0.99 && !this.reload.isDone()) {
-            LOGGER.info("=== 进度卡在 99%+，打印所有线程堆栈 ===");
-            Map<Thread, StackTraceElement[]> allStacks = Thread.getAllStackTraces();
-            for (Map.Entry<Thread, StackTraceElement[]> entry : allStacks.entrySet()) {
-               Thread t = entry.getKey();
-               if (t.getName() == null) continue;
-               LOGGER.info("线程: {} (状态: {})", t.getName(), t.getState());
-               StackTraceElement[] stack = entry.getValue();
-               for (int i = 0; i < Math.min(stack.length, 30); i++) {
-                  LOGGER.info("  {}", stack[i]);
-               }
-               if (stack.length > 30) {
-                  LOGGER.info("  ... (剩余 {} 行)", stack.length - 30);
-               }
+public void tick() {
+    long now = System.currentTimeMillis();
+    if (now - this.lastLogTime > 2000L) {
+        this.lastLogTime = now;
+        float progress = this.reload.getActualProgress();
+        LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}", progress, this.reload.isDone());
+        if (progress > 0.99 && !this.reload.isDone() && now - this.lastLogTime > 30000L) {
+            LOGGER.warn("进度卡住超过30秒，强制完成加载！");
+            this.reload.checkExceptions();
+            this.onFinish.accept(Optional.empty());
+            this.fadeOutStart = Util.getMillis();
+            if (this.minecraft.screen != null) {
+                Window window = this.minecraft.getWindow();
+                this.minecraft.screen.init(window.getGuiScaledWidth(), window.getGuiScaledHeight());
             }
-            LOGGER.info("=== 堆栈打印结束 ===");
-         }
-      }
-
+        }
+    }
+    // ... 原有逻辑
       if (this.fadeOutStart == -1L && this.reload.isDone() && this.isReadyToFadeOut()) {
          try {
             this.reload.checkExceptions();
