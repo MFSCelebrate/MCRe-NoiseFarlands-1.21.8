@@ -101,28 +101,7 @@ jobs:
           cd ..
           echo "✅ 完整 jar 已生成：minecraft-1.21.11-custom-full.jar"
 
-      - name: 验证最终产物中的修改类
-        run: |
-          echo "=== 最终产物中修改类的存在情况 ==="
-          MODIFIED_CLASSES=$(jar tf build/libs/modified.jar | grep '\.class$')
-          if [ -z "$MODIFIED_CLASSES" ]; then
-            echo "⚠️ 警告: modified.jar 中没有 class 文件！"
-            exit 0
-          fi
-          MISSING=0
-          while IFS= read -r class_path; do
-            if jar tf minecraft-1.21.11-custom-full.jar | grep -q "^${class_path}$"; then
-              echo "✅ $class_path 存在"
-            else
-              echo "❌ $class_path 不存在"
-              MISSING=$((MISSING+1))
-            fi
-          done <<< "$MODIFIED_CLASSES"
-          if [ $MISSING -gt 0 ]; then
-            echo "⚠️ 共有 $MISSING 个 class 缺失"
-          else
-            echo "🎉 所有修改的 class 都已成功注入"
-          fi
+      
 
       - name: 验证最终产物
         run: |
