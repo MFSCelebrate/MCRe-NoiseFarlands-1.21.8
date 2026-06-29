@@ -110,19 +110,20 @@ sourceSets {
         java {
             include 'net/minecraft/client/gui/components/debug/DebugEntryVersion.java'
             include 'net/minecraft/world/level/ChunkPos.java'
-          //  include 'net/minecraft/world/entity/ContainerUser.java'
+            include 'net/minecraft/world/entity/ContainerUser.java'
             include 'net/minecraft/server/network/ServerGamePacketListenerImpl.java'
             include 'net/minecraft/world/entity/Entity.java'
             include 'net/minecraft/server/MinecraftServer.java'
-        //    include 'net/minecraft/world/entity/player/Player.java'
+            include 'net/minecraft/world/entity/player/Player.java'
             include 'net/minecraft/server/commands/ForceLoadCommand.java'
             include 'net/minecraft/server/dedicated/DedicatedServerProperties.java'
             include 'net/minecraft/world/level/Level.java'
             include 'net/minecraft/world/level/LevelReader.java'
             include 'net/minecraft/world/level/border/WorldBorder.java'
             include 'net/minecraft/server/commands/WorldBorderCommand.java'
-          //  include 'net/minecraft/world/entity/LivingEntity.java'
-           // include 'net/minecraft/world/entity/Avatar.java'
+            include 'net/minecraft/world/entity/LivingEntity.java'
+            include 'net/minecraft/world/entity/Avatar.java'
+            include 'net/minecraft/client/Minecraft.java'
             
         }
     }
