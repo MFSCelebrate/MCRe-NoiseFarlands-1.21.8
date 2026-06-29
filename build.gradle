@@ -357,7 +357,8 @@ def brokenPatterns = [
 'net/minecraft/world/level/storage/loot/functions/SetCustomModelDataFunction.java',
 'net/minecraft/world/level/storage/loot/predicates/LootItemBlockStatePropertyCondition.java',
 'net/minecraft/world/scores/Scoreboard.java',
-'net/minecraft/world/timeline/Timeline.java'
+'net/minecraft/world/timeline/Timeline.java',
+    'net/minecraft/network/chat/contents/TranslatableContents.java'
 
 ]
 
