@@ -26,7 +26,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-// ========== 全量编译所有源码 ==========
+// ========== 编译源码 ==========
 sourceSets {
     main {
         java {
@@ -49,6 +49,9 @@ tasks.withType(JavaCompile) {
 // ========== 构建完整核心 ==========
 task buildFullJar(type: Jar) {
     dependsOn compileJava
+    
+    // 设置重复文件处理策略
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     
     // 1. 从 src/main/resources/ 复制所有资源
     from 'src/main/resources'
