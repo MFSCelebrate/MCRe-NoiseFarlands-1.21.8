@@ -201,7 +201,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
    private static final int AUTOSAVE_INTERVAL = 6000;
    private static final int MIMINUM_AUTOSAVE_TICKS = 100;
    private static final int MAX_TICK_LATENCY = 3;
-   public static final int ABSOLUTE_MAX_WORLD_SIZE = 2147484646;
+   public static final int ABSOLUTE_MAX_WORLD_SIZE = 2147483646;
    public static final LevelSettings DEMO_SETTINGS = new LevelSettings(
       "Demo World", GameType.SURVIVAL, false, Difficulty.NORMAL, false, new GameRules(FeatureFlags.DEFAULT_FLAGS), WorldDataConfiguration.DEFAULT
    );
