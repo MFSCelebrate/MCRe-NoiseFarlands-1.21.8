@@ -270,7 +270,7 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
             RegistryOps<JsonElement> ops = registries.createSerializationContext(JsonOps.INSTANCE);
             Optional<FlatLevelGeneratorSettings> parsedSettings = FlatLevelGeneratorSettings.CODEC
                .parse(new Dynamic(ops, this.generatorSettings()))
-               .resultOrPartial(msg -> DedicatedServerProperties.LOGGER.error(msg));
+               .resultOrPartial(msg -> DedicatedServerProperties.LOGGER.error(String.valueOf(msg)));
                if (parsedSettings.isPresent()) {
                return worldDimensions.replaceOverworldGenerator(registries, new FlatLevelSource(parsedSettings.get()));
             }
