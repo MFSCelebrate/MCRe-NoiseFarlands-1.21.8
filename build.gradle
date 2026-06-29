@@ -117,7 +117,6 @@ def brokenPatterns = [
 'net/minecraft/advancements/criterion/EntityFlagsPredicate.java',
 'net/minecraft/advancements/criterion/MinMaxBounds.java',
 'net/minecraft/advancements/criterion/SlideDownBlockTrigger.java',
-'net/minecraft/class_2165.java',
 'net/minecraft/client/OptionInstance.java',
 'net/minecraft/client/PeriodicNotificationManager.java',
 'net/minecraft/client/data/models/BlockModelGenerators.java',
