@@ -260,6 +260,7 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import org.slf4j.Logger;
 
 public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements WindowEventHandler {
+   
    private static Minecraft instance;
    private static final Logger LOGGER = LogUtils.getLogger();
    private static final int MAX_TICKS_PER_UPDATE = 10;
@@ -390,6 +391,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    private List<SimpleGizmoCollector.GizmoInstance> drainedLatestTickGizmos = new ArrayList<>();
 
    public Minecraft(final GameConfig gameConfig) {
+      LOGGER.info("=== Minecraft 构造函数开始 ===");
       super("Client");
       instance = this;
       this.clientStartTimeMs = System.currentTimeMillis();
@@ -681,6 +683,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
       }
 
       this.packetProcessor = new PacketProcessor(this.gameThread);
+      LOGGER.info("=== Minecraft 构造函数结束 ===");
    }
 
    public boolean hasShiftDown() {
@@ -703,6 +706,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
          this.gameLoadFinished = true;
          this.onGameLoadFinished(loadCookie);
       }
+      LOGGER.info("=== 资源加载完成，准备显示主菜单 ===");
    }
 
    private void onGameLoadFinished(final Minecraft.@Nullable GameLoadCookie cookie) {
@@ -713,6 +717,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
       showScreen.run();
       this.options.startedCleanly = true;
       this.options.save();
+      LOGGER.info("=== 资源加载完成，准备显示主菜单 ===");
    }
 
    public boolean isGameLoadFinished() {
@@ -720,6 +725,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    }
 
    private Runnable buildInitialScreens(final Minecraft.@Nullable GameLoadCookie cookie) {
+      LOGGER.info("=== 正在创建 TitleScreen ===");
       List<Function<Runnable, Screen>> screens = new ArrayList<>();
       boolean onboardingScreenAdded = this.addInitialScreens(screens);
       Runnable nextStep = () -> {
@@ -734,7 +740,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
          Screen screen = function.apply(nextStep);
          nextStep = () -> this.setScreen(screen);
       }
-
+      LOGGER.info("=== TitleScreen 创建完成 ===");
       return nextStep;
    }
 
@@ -744,6 +750,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
          screens.add(next -> new AccessibilityOnboardingScreen(this.options, next));
          onboardingScreenAdded = true;
       }
+      LOGGER.info("=== addInitialScreens 创建完成 ===");
 
       BanDetails multiplayerBan = this.multiplayerBan();
       if (multiplayerBan != null) {
@@ -1111,6 +1118,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    }
 
    public void setScreen(@Nullable Screen screen) {
+      LOGGER.info("setScreen 被调用，目标屏幕: {}", screen == null ? "null" : screen.getClass().getSimpleName());
       if (SharedConstants.IS_RUNNING_IN_IDE && Thread.currentThread() != this.gameThread) {
          LOGGER.error("setScreen called from non-game thread");
       }
@@ -1157,7 +1165,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
          this.soundManager.resume();
          this.mouseHandler.grabMouse();
       }
-
+      LOGGER.info("setScreen 完成，当前屏幕: {}", this.screen == null ? "null" : this.screen.getClass().getSimpleName());
       this.updateTitle();
    }
 
@@ -1232,6 +1240,9 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    }
 
    private void runTick(final boolean advanceGameTime) {
+      if (this.tickCount < 5) {
+    LOGGER.info("runTick 第 {} 次调用", this.tickCount);
+      }
       this.window.setErrorSection("Pre render");
       if (this.window.shouldClose()) {
          this.stop();
