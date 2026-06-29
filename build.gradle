@@ -466,9 +466,12 @@ include 'net/minecraft/world/level/storage/LevelStorageSource.java'
 
 // ========== 打包修改的类为 modified.jar ==========
 tasks.remapJar {
+    targetNamespace = 'official'  // 使用 Mojang 映射
     archiveFileName.set('modified.jar')
+    manifest {
+        attributes 'Main-Class': 'net.minecraft.client.main.Main'
+    }
 }
-
 // 让 build 依赖 remapJar
 tasks.build {
     dependsOn tasks.remapJar
