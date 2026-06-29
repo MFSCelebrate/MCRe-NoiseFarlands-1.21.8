@@ -1,4 +1,4 @@
-name: Build Custom Minecraft 1.21.11
+name: Build Custom Minecraft 1.21.11 with Dependency Check
 
 on:
   push:
@@ -36,6 +36,106 @@ jobs:
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
+      # ========== 新增：检查 sourceSets 依赖完整性 ==========
+      - name: 检查 sourceSets 中类的依赖是否完整
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          # 1. 解析 build.gradle 中的 include 列表
+          gradle_file = 'build.gradle'
+          include_pattern = re.compile(r"include\s+'([^']+)'")
+          includes = []
+          with open(gradle_file, 'r', encoding='utf-8') as f:
+              for line in f:
+                  m = include_pattern.search(line)
+                  if m:
+                      includes.append(m.group(1))
+
+          print(f"📦 当前 include 列表 ({len(includes)} 个文件):")
+          for inc in includes:
+              print(f"  - {inc}")
+
+          # 2. 构建所有可修改文件的映射：类名 -> 路径
+          src_root = Path('src/main/java')
+          all_java_files = list(src_root.rglob('*.java'))
+          # 建立类名到路径的映射（简单类名，可能有重名，但先忽略）
+          class_to_path = {}
+          for java_file in all_java_files:
+              # 读取文件，获取类名（简单方式：查找 class/interface/enum/record 声明）
+              try:
+                  with open(java_file, 'r', encoding='utf-8') as f:
+                      content = f.read()
+                      # 匹配类声明：public class Xxx 或 public interface Xxx 等
+                      match = re.search(r'(?:public\s+)?(?:abstract\s+)?(?:final\s+)?(?:class|interface|enum|record)\s+(\w+)', content)
+                      if match:
+                          class_name = match.group(1)
+                          class_to_path[class_name] = java_file.relative_to(src_root).as_posix()
+              except Exception:
+                  pass
+
+          # 3. 对于每个 include 的文件，检查其 implements/extends 依赖
+          errors = []
+          for include_path in includes:
+              file_path = src_root / include_path
+              if not file_path.exists():
+                  errors.append(f"❌ 文件不存在: {include_path}")
+                  continue
+
+              with open(file_path, 'r', encoding='utf-8') as f:
+                  content = f.read()
+
+              # 提取 implements 和 extends 后的类名（忽略泛型）
+              # 匹配 implements 或 extends 后的单词（可能带包名）
+              # 示例: implements ContainerUser, SomeInterface<Type>
+              # 提取 ContainerUser 和 SomeInterface
+              deps = []
+              # 先找 extends/implements 行，可能有多个接口用逗号分隔
+              for keyword in ['implements', 'extends']:
+                  # 找到 keyword 所在行，可能跨行，简单起见用正则匹配
+                  pattern = re.compile(r'\b' + keyword + r'\s+([^{]+)', re.DOTALL)
+                  matches = pattern.findall(content)
+                  for match in matches:
+                      # 按逗号分割，处理每个依赖
+                      parts = match.split(',')
+                      for part in parts:
+                          # 去掉泛型
+                          dep = re.sub(r'<.*>', '', part).strip()
+                          # 去掉注释和无关字符
+                          dep = re.sub(r'//.*', '', dep)
+                          dep = dep.split()[0]  # 取第一个单词
+                          if dep and dep not in ['Object', '']:
+                              deps.append(dep)
+
+              # 对于每个依赖，检查它是否在 class_to_path 中（即属于我们修改的范围）
+              for dep in deps:
+                  # 如果依赖是简单类名，检查映射
+                  if dep in class_to_path:
+                      dep_path = class_to_path[dep]
+                      # 检查该依赖是否也在 include 列表中
+                      if dep_path not in includes:
+                          errors.append(
+                              f"❌ {include_path} 依赖了 {dep}（{dep_path}），但该文件未被包含在 sourceSets 中！"
+                          )
+                  else:
+                      # 可能依赖来自 java.lang 或原版，忽略
+                      pass
+
+          # 4. 报告结果
+          if errors:
+              print("\n🚨 依赖检查失败！以下问题需要修复：")
+              for err in errors:
+                  print(err)
+              print("\n💡 建议：将这些缺失的文件添加到 build.gradle 的 sourceSets 中。")
+              sys.exit(1)
+          else:
+              print("\n✅ 所有依赖检查通过！")
+          PYTHON_SCRIPT
+
+      # ========== 原有的编译步骤 ==========
       - name: 编译修改的类
         id: build
         run: |
@@ -85,15 +185,26 @@ jobs:
       - name: 验证最终产物中的修改类
         run: |
           echo "=== 最终产物中修改类的存在情况 ==="
-          # 定义混淆类名列表（不带路径）
-          CLASSES="glv gnd class_2375 class_2919 class_1293 class_1254 class_1764 class_2692 class_1164 class_1175 class_1184 class_1765"
-          for class in $CLASSES; do
-            if jar tf minecraft-1.21.11-custom-full.jar | grep -q "/${class}\.class"; then
-              echo "✅ $class 存在"
+          # 提取 modified.jar 中的所有 class 文件路径（相对路径）
+          MODIFIED_CLASSES=$(jar tf build/libs/modified.jar | grep '\.class$')
+          if [ -z "$MODIFIED_CLASSES" ]; then
+            echo "⚠️ 警告: modified.jar 中没有 class 文件！"
+            exit 0
+          fi
+          MISSING=0
+          while IFS= read -r class_path; do
+            if jar tf minecraft-1.21.11-custom-full.jar | grep -q "^${class_path}$"; then
+              echo "✅ $class_path 存在"
             else
-              echo "❌ $class 不存在"
+              echo "❌ $class_path 不存在"
+              MISSING=$((MISSING+1))
             fi
-          done
+          done <<< "$MODIFIED_CLASSES"
+          if [ $MISSING -gt 0 ]; then
+            echo "⚠️ 共有 $MISSING 个 class 缺失"
+          else
+            echo "🎉 所有修改的 class 都已成功注入"
+          fi
 
       - name: 验证最终产物
         run: |
