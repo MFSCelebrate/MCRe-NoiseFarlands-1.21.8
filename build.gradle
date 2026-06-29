@@ -70,6 +70,10 @@ task buildFullJar(type: Jar) {
     destinationDirectory.set(file('build/libs'))
 }
 
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 tasks.build {
     dependsOn tasks.buildFullJar
 }
