@@ -125,11 +125,7 @@ sourceSets {
 
 // ========== 打包修改的类为 modified.jar ==========
 tasks.remapJar {
-    targetNamespace = 'official'
     archiveFileName.set('modified.jar')
-    manifest {
-        attributes 'Main-Class': 'net.minecraft.client.main.Main'
-    }
 }
 
 // 让 build 依赖 remapJar
