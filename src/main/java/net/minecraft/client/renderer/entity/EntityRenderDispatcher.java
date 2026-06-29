@@ -90,8 +90,16 @@ public class EntityRenderDispatcher implements ResourceManagerReloadListener {
 
    public <T extends Entity> EntityRenderer<? super T, ?> getRenderer(final T entity) {
       return switch (entity) {
-         case AbstractClientPlayer player -> this.getAvatarRenderer((Map<PlayerModelType, AvatarRenderer<T>>)this.playerRenderers, (T)player);
-         case ClientMannequin mannequin -> this.getAvatarRenderer((Map<PlayerModelType, AvatarRenderer<T>>)this.mannequinRenderers, (T)mannequin);
+         
+// 方案二（临时）：拆分switch，分别处理
+case AbstractClientPlayer player -> {
+    AvatarRenderer<AbstractClientPlayer> renderer = (AvatarRenderer<AbstractClientPlayer>) this.playerRenderers.get(player.getPlayerModelType());
+    return renderer;
+}
+case ClientMannequin mannequin -> {
+    AvatarRenderer<ClientMannequin> renderer = (AvatarRenderer<ClientMannequin>) this.mannequinRenderers.get(mannequin.getPlayerModelType());
+    return renderer;
+}
          default -> (EntityRenderer)this.renderers.get(entity.getType());
       };
    }
