@@ -20,20 +20,20 @@ public class Avatar extends LivingEntity {
    protected static final EntityDimensions STANDING_DIMENSIONS = EntityDimensions.scalable(0.6F, 1.8F)
       .withEyeHeight(1.62F)
       .withAttachments(EntityAttachments.builder().attach(EntityAttachment.VEHICLE, DEFAULT_VEHICLE_ATTACHMENT));
-   protected static final Map<Pose, EntityDimensions> POSES = ImmutableMap.builder()
-      .put(Pose.STANDING, STANDING_DIMENSIONS)
-      .put(Pose.SLEEPING, SLEEPING_DIMENSIONS)
-      .put(Pose.FALL_FLYING, EntityDimensions.scalable(0.6F, 0.6F).withEyeHeight(0.4F))
-      .put(Pose.SWIMMING, EntityDimensions.scalable(0.6F, 0.6F).withEyeHeight(0.4F))
-      .put(Pose.SPIN_ATTACK, EntityDimensions.scalable(0.6F, 0.6F).withEyeHeight(0.4F))
-      .put(
-         Pose.CROUCHING,
-         EntityDimensions.scalable(0.6F, 1.5F)
-            .withEyeHeight(1.27F)
-            .withAttachments(EntityAttachments.builder().attach(EntityAttachment.VEHICLE, DEFAULT_VEHICLE_ATTACHMENT))
-      )
-      .put(Pose.DYING, EntityDimensions.fixed(0.2F, 0.2F).withEyeHeight(1.62F))
-      .build();
+   protected static final Map<Pose, EntityDimensions> POSES = ImmutableMap.<Pose, EntityDimensions>builder()
+   .put(Pose.STANDING, STANDING_DIMENSIONS)
+   .put(Pose.SLEEPING, SLEEPING_DIMENSIONS)
+   .put(Pose.FALL_FLYING, EntityDimensions.scalable(0.6F, 0.6F).withEyeHeight(0.4F))
+   .put(Pose.SWIMMING, EntityDimensions.scalable(0.6F, 0.6F).withEyeHeight(0.4F))
+   .put(Pose.SPIN_ATTACK, EntityDimensions.scalable(0.6F, 0.6F).withEyeHeight(0.4F))
+   .put(
+      Pose.CROUCHING,
+      EntityDimensions.scalable(0.6F, 1.5F)
+         .withEyeHeight(1.27F)
+         .withAttachments(EntityAttachments.builder().attach(EntityAttachment.VEHICLE, DEFAULT_VEHICLE_ATTACHMENT))
+   )
+   .put(Pose.DYING, EntityDimensions.fixed(0.2F, 0.2F).withEyeHeight(1.62F))
+   .build();
    protected static final EntityDataAccessor<HumanoidArm> DATA_PLAYER_MAIN_HAND = SynchedEntityData.defineId(Avatar.class, EntityDataSerializers.HUMANOID_ARM);
    protected static final EntityDataAccessor<Byte> DATA_PLAYER_MODE_CUSTOMISATION = SynchedEntityData.defineId(Avatar.class, EntityDataSerializers.BYTE);
 
