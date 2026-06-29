@@ -42,8 +42,7 @@ public record LastSeenMessages(List<MessageSignature> entries) {
       public static final LastSeenMessages.Packed EMPTY = new LastSeenMessages.Packed(List.of());
 
       public Packed(final FriendlyByteBuf input) {
-         List<MessageSignature.Packed> list = input.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, 20), MessageSignature.Packed::read);
-         this(list);
+   this((List<MessageSignature.Packed>) input.readCollection(FriendlyByteBuf.limitValue((IntFunction<ArrayList<MessageSignature.Packed>>) ArrayList::new, 20), MessageSignature.Packed::read));
       }
 
       public void write(final FriendlyByteBuf output) {
