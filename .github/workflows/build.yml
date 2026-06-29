@@ -1,0 +1,33 @@
+name: Build Yarn Mapping Minecraft 1.21.8
+
+on:
+  push:
+    branches: [ "1.21.8-YarnRepMain-Partial" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 配置 JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: 给 gradlew 加执行权限
+        run: chmod +x ./gradlew
+
+      - name: 构建完整核心
+        run: ./gradlew buildFullJar --no-daemon
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minecraft-1.21.8-Custom
+          path: build/libs/minecraft-*.jar
+          if-no-files-found: error

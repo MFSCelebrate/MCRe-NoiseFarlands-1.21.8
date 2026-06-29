@@ -1,0 +1,38 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  net.fabricmc.api.EnvType
+ *  net.fabricmc.api.Environment
+ */
+package net.minecraft.client.network;
+
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.util.Util;
+
+@Environment(value=EnvType.CLIENT)
+public class LanServerInfo {
+    final private String motd;
+    final private String addressPort;
+    private long lastTimeMillis;
+
+    public LanServerInfo(String motd, String addressPort) {
+        this.motd = motd;
+        this.addressPort = addressPort;
+        this.lastTimeMillis = Util.getMeasuringTimeMs();
+    }
+
+    public String getMotd() {
+        return this.motd;
+    }
+
+    public String getAddressPort() {
+        return this.addressPort;
+    }
+
+    public void updateLastTime() {
+        this.lastTimeMillis = Util.getMeasuringTimeMs();
+    }
+}
+

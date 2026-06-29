@@ -1,0 +1,27 @@
+/*
+ * Decompiled with CFR 0.152.
+ */
+package net.minecraft.util.profiling.jfr.event;
+
+import jdk.jfr.EventType;
+import jdk.jfr.Label;
+import jdk.jfr.Name;
+import net.minecraft.obfuscate.DontObfuscate;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.profiling.jfr.event.ChunkRegionEvent;
+import net.minecraft.world.storage.ChunkCompressionFormat;
+import net.minecraft.world.storage.StorageKey;
+
+@Name(value="minecraft.ChunkRegionRead")
+@Label(value="Region File Read")
+@DontObfuscate
+public class ChunkRegionReadEvent
+extends ChunkRegionEvent {
+    final static public String EVENT_NAME = "minecraft.ChunkRegionRead";
+    final static public EventType TYPE = EventType.getEventType(ChunkRegionReadEvent.class);
+
+    public ChunkRegionReadEvent(StorageKey storageKey, ChunkPos chunkPos, ChunkCompressionFormat chunkCompressionFormat, int i) {
+        super(storageKey, chunkPos, chunkCompressionFormat, 1);
+    }
+}
+
