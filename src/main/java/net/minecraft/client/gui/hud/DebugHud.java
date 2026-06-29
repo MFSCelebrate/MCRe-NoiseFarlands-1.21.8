@@ -165,7 +165,7 @@ public class DebugHud {
         this.allocationRateCalculator = new AllocationRateCalculator();
         this.textRenderer = client.textRenderer;
         this.renderingChart = new RenderingChart(this.textRenderer, this.frameNanosLog);
-        this.tickChart = new TickChart(this.textRenderer, this.tickNanosLog, () -> Float.valueOf(minecraftClient.world.getTickManager().getMillisPerTick()));
+        this.tickChart = new TickChart(this.textRenderer, this.tickNanosLog, () -> Float.valueOf(this.client.world.getTickManager().getMillisPerTick()));
         this.pingChart = new PingChart(this.textRenderer, this.pingLog);
         this.packetSizeChart = new PacketSizeChart(this.textRenderer, this.packetSizeLog);
         this.pieChart = new PieChart(this.textRenderer);
@@ -335,7 +335,7 @@ public class DebugHud {
         }
         BlockPos blockPos = this.client.getCameraEntity().getBlockPos();
         if (this.client.hasReducedDebugInfo()) {
-            return Lists.newArrayList((Object[])new String[]{"Minecraft - MCRe NoiseFarlandsJava " + SharedConstants.getGameVersion().name() + " (" + this.client.getGameVersion() + "/" + ClientBrandRetriever.getClientModName() + ")", this.client.fpsDebugString, string3, this.client.worldRenderer.getChunksDebugString(), this.client.worldRenderer.getEntitiesDebugString(), "P: " + this.client.particleManager.getDebugString() + ". T: " + this.client.world.getRegularEntityCount(), this.client.world.asString(), "", String.format(Locale.ROOT, "Chunk-relative: %d %d %d", blockPos.getX() & 0xF, blockPos.getY() & 0xF, blockPos.getZ() & 0xF)});
+            return List.of("Minecraft - MCRe NoiseFarlandsJava " + SharedConstants.getGameVersion().name() + " (" + this.client.getGameVersion() + "/" + ClientBrandRetriever.getClientModName() + ")", this.client.fpsDebugString, string3, this.client.worldRenderer.getChunksDebugString(), this.client.worldRenderer.getEntitiesDebugString(), "P: " + this.client.particleManager.getDebugString() + ". T: " + this.client.world.getRegularEntityCount(), this.client.world.asString(), "", String.format(Locale.ROOT, "Chunk-relative: %d %d %d", blockPos.getX() & 0xF, blockPos.getY() & 0xF, blockPos.getZ() & 0xF));
         }
         Entity entity = this.client.getCameraEntity();
         Direction direction = entity.getHorizontalFacing();
@@ -351,7 +351,7 @@ public class DebugHud {
             this.pos = chunkPos;
             this.resetChunk();
         }
-        LongSets.EmptySet longSet = (world = this.getWorld()) instanceof ServerWorld ? ((ServerWorld)world).getForcedChunks() : LongSets.EMPTY_SET;
+        LongSet longSet = (world = this.getWorld()) instanceof ServerWorld ? ((ServerWorld)world).getForcedChunks() : LongSets.EMPTY_SET;
         ArrayList list = Lists.newArrayList((Object[])new String[]{"Minecraft - MCRe NoiseFarlandsJava " + SharedConstants.getGameVersion().name() + " (" + this.client.getGameVersion() + "/" + ClientBrandRetriever.getClientModName() + (String)("release".equalsIgnoreCase(this.client.getVersionType()) ? "" : "/" + this.client.getVersionType()) + ")", this.client.fpsDebugString, string3, this.client.worldRenderer.getChunksDebugString(), this.client.worldRenderer.getEntitiesDebugString(), "P: " + this.client.particleManager.getDebugString() + ". T: " + this.client.world.getRegularEntityCount(), this.client.world.asString()});
         String string5 = this.getServerWorldDebugString();
         if (string5 != null) {
@@ -367,7 +367,7 @@ public class DebugHud {
         if (worldChunk.isEmpty()) {
             list.add("Server is Waiting for chunk...");
         } else {
-            int i = this.client.world.net_minecraft_client_world_ClientChunkManager_getChunkManager().net_minecraft_world_chunk_light_LightingProvider_getLightingProvider().getLight(blockPos, 0);
+            int i = this.client.world.getChunkManager().getLightingProvider().getLight(blockPos, 0);
             int j = this.client.world.getLightLevel(LightType.SKY, blockPos);
             int k = this.client.world.getLightLevel(LightType.BLOCK, blockPos);
             list.add("Client Light: " + i + " (" + j + " sky, " + k + " block)");
@@ -407,7 +407,7 @@ public class DebugHud {
         }
         ServerWorld serverWorld = this.getServerWorld();
         if (serverWorld != null) {
-            ServerChunkManager serverChunkManager = serverWorld.net_minecraft_server_world_ServerChunkManager_getChunkManager();
+            ServerChunkManager serverChunkManager = serverWorld.getChunkManager();
             ChunkGenerator chunkGenerator = serverChunkManager.getChunkGenerator();
             NoiseConfig noiseConfig = serverChunkManager.getNoiseConfig();
             chunkGenerator.appendDebugHudText(list, noiseConfig, blockPos);
@@ -463,14 +463,14 @@ public class DebugHud {
             if (serverWorld == null) {
                 return null;
             }
-            this.chunkFuture = serverWorld.net_minecraft_server_world_ServerChunkManager_getChunkManager().getChunkFutureSyncOnMainThread(this.pos.x, this.pos.z, ChunkStatus.FULL, false).thenApply(chunk -> chunk.orElse(null));
+            this.chunkFuture = serverWorld.getChunkManager().getChunkFutureSyncOnMainThread(this.pos.x, this.pos.z, ChunkStatus.FULL, false).thenApply(chunk -> chunk.orElse(null));
         }
         return this.chunkFuture.getNow(null);
     }
 
     private WorldChunk getClientChunk() {
         if (this.chunk == null) {
-            this.chunk = this.client.world.net_minecraft_world_chunk_WorldChunk_getChunk(this.pos.x, this.pos.z);
+            this.chunk = this.client.world.getChunk(this.pos.x, this.pos.z);
         }
         return this.chunk;
     }
