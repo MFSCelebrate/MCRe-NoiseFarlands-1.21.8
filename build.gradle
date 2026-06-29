@@ -104,11 +104,23 @@ processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+def brokenPatterns = [
+    'net/minecraft/client/renderer/LevelRenderer.java',
+    'net/minecraft/client/renderer/entity/EntityRenderDispatcher.java',
+    'net/minecraft/client/gui/font/FontManager.java',
+    'net/minecraft/util/Util.java',
+    'net/minecraft/util/datafix/DataFixers.java'
+    'net/minecraft/network/codec/StreamCodec.java'
+]
+
 // ========== sourceSets：只编译修改的类 ==========
 sourceSets {
     main {
         java {
             include 'net/minecraft/**'
+            brokenPatterns.each { pattern ->
+                    exclude pattern
+            }
             /*include 'net/minecraft/client/gui/components/debug/DebugEntryVersion.java'
             include 'net/minecraft/world/level/ChunkPos.java'
             include 'net/minecraft/world/entity/ContainerUser.java'
