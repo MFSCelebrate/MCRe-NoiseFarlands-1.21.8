@@ -607,7 +607,7 @@ public class Util {
    public static <K extends Enum<K>, V> Map<K, V> makeEnumMap(final Class<K> keyType, final Function<K, V> function) {
       EnumMap<K, V> map = new EnumMap<>(keyType);
 
-      for (K key : (Enum[])keyType.getEnumConstants()) {
+      for (K key : keyType.getEnumConstants()) {
          map.put(key, function.apply(key));
       }
 
@@ -1138,15 +1138,15 @@ public class Util {
    }
 
    public static <T> List<T> copyAndAdd(final List<T> list, final T element) {
-      return ImmutableList.builderWithExpectedSize(list.size() + 1).addAll(list).add(element).build();
+      return ImmutableList.<T>builderWithExpectedSize(list.size() + 1).addAll(list).add(element).build()
    }
 
    public static <T> List<T> copyAndAdd(final T element, final List<T> list) {
-      return ImmutableList.builderWithExpectedSize(list.size() + 1).add(element).addAll(list).build();
+      return ImmutableList.<T>builderWithExpectedSize(list.size() + 1).addAll(list).add(element).build()
    }
 
    public static <K, V> Map<K, V> copyAndPut(final Map<K, V> map, final K key, final V value) {
-      return ImmutableMap.builderWithExpectedSize(map.size() + 1).putAll(map).put(key, value).buildKeepingLast();
+      return ImmutableMap.<K, V>builderWithExpectedSize(map.size() + 1).putAll(map).put(key, value).buildKeepingLast()
    }
 
    public enum OS {
