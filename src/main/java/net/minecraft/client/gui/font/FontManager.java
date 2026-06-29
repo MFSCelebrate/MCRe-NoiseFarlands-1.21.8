@@ -286,29 +286,25 @@ public class FontManager implements AutoCloseable, PreparableReloadListener {
       }
    }
 
-   private record BuilderResult(FontManager.BuilderId id, FontOption.Filter filter, Either<CompletableFuture<Optional<GlyphProvider>>, Identifier> result) {
-      public Optional<List<Conditional>> resolve(final Function<Identifier, @Nullable List<Conditional>> resolver) {
-         return (Optional<List<Conditional>>)this.result
-            .map(
-               provider -> ((Optional<GlyphProvider>)provider.join())
-    .map(p -> List.of(new Conditional(p, this.filter)))
-    .orElse(List.of())
-               reference -> {
-                  List<Conditional> resolvedReferences = resolver.apply(reference);
-                  if (resolvedReferences == null) {
-                     FontManager.LOGGER
-                        .warn(
-                           "Can't find font {} referenced by builder {}, either because it's missing, failed to load or is part of loading cycle",
-                           reference,
-                           this.id
-                        );
-                     return Optional.empty();
-                  } else {
-                     return Optional.of(resolvedReferences.stream().map(this::mergeFilters).toList());
-                  }
-               }
+   public Optional<List<Conditional>> resolve(final Function<Identifier, @Nullable List<Conditional>> resolver) {
+    if (this.result.isLeft()) {
+        // 处理 Left：CompletableFuture<Optional<GlyphProvider>>
+        Optional<GlyphProvider> optProvider = this.result.getLeft().join();
+        return Optional.of(optProvider.map(p -> List.of(new Conditional(p, this.filter))).orElse(List.of()));
+    } else {
+        // 处理 Right：Identifier
+        Identifier reference = this.result.getRight();
+        List<Conditional> resolvedReferences = resolver.apply(reference);
+        if (resolvedReferences == null) {
+            FontManager.LOGGER.warn(
+                "Can't find font {} referenced by builder {}, either because it's missing, failed to load or is part of loading cycle",
+                reference, this.id
             );
-      }
+            return Optional.empty();
+        } else {
+            return Optional.of(resolvedReferences.stream().map(this::mergeFilters).toList());
+        }
+    }
 
       private Conditional mergeFilters(final Conditional original) {
          return new Conditional(original.provider(), this.filter.merge(original.filter()));
