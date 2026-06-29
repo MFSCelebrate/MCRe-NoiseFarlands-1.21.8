@@ -1242,9 +1242,11 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    }
 
    private void runTick(final boolean advanceGameTime) {
-    if (this.clientTickCount % 100 == 0) {
-    LOGGER.info("runTick 仍在运行，第 {} 次", this.clientTickCount);
-    }
+    // 在 runTick 方法开头添加（约第 1243 行附近）
+if (this.clientTickCount % 100 == 0) {
+    String overlayName = this.overlay == null ? "null" : this.overlay.getClass().getSimpleName();
+    LOGGER.info("runTick 第 {} 次，当前 overlay: {}", this.clientTickCount, overlayName);
+}
     // ... 原方法体
       this.window.setErrorSection("Pre render");
       if (this.window.shouldClose()) {
@@ -1760,7 +1762,7 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
    public void tick() {
       this.clientTickCount++;
       // 在 LoadingOverlay 的构造函数或 tick 方法中
-LOGGER.info("LoadingOverlay: 当前进度 {}", this.progress);
+
       if (this.level != null && !this.pause) {
          this.level.tickRateManager().tick();
       }
