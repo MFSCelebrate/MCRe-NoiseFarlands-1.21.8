@@ -33,49 +33,20 @@ jobs:
           CLIENT_URL=$(cat version.json | jq -r '.downloads.client.url')
           wget -O original.jar $CLIENT_URL
 
-      # ========== 新增：生成所有源文件的映射表 ==========
-      - name: 生成 net/minecraft/ 所有源文件的混淆类映射
-        run: |
-          echo "=== net/minecraft/ 所有源文件 -> 混淆类 映射 ==="
-          echo "| 源文件路径 | 混淆类 |"
-          echo "|------------|--------|"
-          
-          # 创建临时目录
-          mkdir -p temp_all
-          cd temp_all
-          jar xf ../original.jar
-          
-          # 遍历所有 class 文件，只关注 net/minecraft/ 下的
-          find net/minecraft -name "*.class" | while read -r class_file; do
-            # 提取包路径（去掉类名）
-            package_dir=$(dirname "$class_file")
-            class_name=$(basename "$class_file" .class)
-            # 提取 SourceFile
-            source_file=$(javap -v "$class_file" 2>/dev/null | grep "SourceFile" | head -1 | sed 's/.*"\(.*\)"/\1/' || echo "")
-            if [ -n "$source_file" ]; then
-              # 构造完整的源文件路径（包路径 + 源文件名）
-              source_path="$package_dir/$source_file"
-              echo "| $source_path | $class_name.class |"
-            else
-              # 如果没有 SourceFile 属性，就显示 class 的完整路径
-              echo "| $class_file (无SourceFile) | $class_name.class |"
-            fi
-          done
-          cd ..
-          rm -rf temp_all
-
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
-      - name: 编译修改的类
+      - name: 编译并 remap 修改后的类（只编译 11 个核心类）
         id: build
         run: |
+          # 编译并输出日志
           ./gradlew remapJar --no-daemon 2>&1 | tee full.log
+          # 提取错误信息（如果有）
           grep -B 2 -A 5 "error:" full.log > compile_errors.log || true
           rm -f full.log
         continue-on-error: true
 
-      - name: 上传编译错误日志
+      - name: 上传编译错误日志（如果有）
         uses: actions/upload-artifact@v4
         with:
           name: CompileErrors
@@ -88,27 +59,42 @@ jobs:
             echo "错误: modified.jar 未生成！"
             exit 1
           fi
-          echo "✅ modified.jar 已生成"
+          echo "modified.jar 已生成，内容如下："
+          jar tf build/libs/modified.jar
 
-      - name: 合并所有修改到原版 jar
+      - name: 准备合并目录
         run: |
-          mkdir -p merged
-          cd merged
+          rm -rf extracted
+          mkdir -p extracted
+
+      - name: 解压原版 jar
+        run: |
+          cd extracted
           jar xf ../original.jar
+          cd ..
+
+      - name: 合并 modified.jar 中的所有类（覆盖同路径）
+        run: |
+          cd extracted
           jar xf ../build/libs/modified.jar
+          # 删除 Mojang 签名文件（防止签名校验失败）
           rm -f META-INF/*.SF META-INF/*.RSA META-INF/*.DSA
+          cd ..
+
+      - name: 重新打包完整 jar
+        run: |
+          cd extracted
           jar cfm ../minecraft-1.21.11-custom-full.jar META-INF/MANIFEST.MF .
           cd ..
-          echo "✅ 完整 jar 已生成：minecraft-1.21.11-custom-full.jar"
 
-      
-
-      - name: 验证最终产物
+      - name: 验证最终产物（关键类检查）
         run: |
-          echo "=== 最终产物大小 ==="
-          ls -lh minecraft-1.21.11-custom-full.jar
-          echo "=== 包含的 class 文件总数 ==="
-          jar tf minecraft-1.21.11-custom-full.jar | grep '\.class$' | wc -l
+          echo "===== 验证修改的类是否存在 ====="
+          jar tf minecraft-1.21.11-custom-full.jar | grep -E "glv|class_1184|arp" | head -20 || echo "⚠️ 未找到修改的类？"
+          echo "===== 验证原版关键类是否存在（class_2588 = TranslatableContents） ====="
+          jar tf minecraft-1.21.11-custom-full.jar | grep class_2588 || echo "❌ class_2588 缺失！"
+          echo "===== 验证 WorldBorder 相关类 ====="
+          jar tf minecraft-1.21.11-custom-full.jar | grep -i "worldborder" | head -10 || echo "⚠️ 未找到 WorldBorder 类？"
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
