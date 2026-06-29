@@ -746,12 +746,12 @@ public abstract class Player extends Avatar implements ContainerUser {
    }
 
    @Override
-   protected void hurtArmor(final DamageSource damageSource, final float damage) {
+   public void hurtArmor(final DamageSource damageSource, final float damage) {
       this.doHurtEquipment(damageSource, damage, EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD);
    }
 
    @Override
-   protected void hurtHelmet(final DamageSource damageSource, final float damage) {
+   public void hurtHelmet(final DamageSource damageSource, final float damage) {
       this.doHurtEquipment(damageSource, damage, EquipmentSlot.HEAD);
    }
 
