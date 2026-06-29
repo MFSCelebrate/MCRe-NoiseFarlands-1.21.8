@@ -10,7 +10,7 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:intermediary:${project.minecraft_version}:v2"
+    mappings loom.officialMojangMappings()
     
     // ========== 从 library.txt 提取的所有第三方依赖 ==========
     // 核心工具库
@@ -113,6 +113,7 @@ sourceSets {
             include 'net/minecraft/server/network/ServerGamePacketListenerImpl.java'
             include 'net/minecraft/world/entity/Entity.java'
             include 'net/minecraft/server/MinecraftServer.java'
+            include 'net/minecraft/world/entity/player/Player.java'
             include 'net/minecraft/server/commands/ForceLoadCommand.java'
             include 'net/minecraft/server/dedicated/DedicatedServerProperties.java'
             include 'net/minecraft/world/level/Level.java'
