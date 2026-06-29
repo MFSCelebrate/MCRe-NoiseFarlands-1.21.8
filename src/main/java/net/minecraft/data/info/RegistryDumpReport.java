@@ -28,27 +28,26 @@ public class RegistryDumpReport implements DataProvider {
    }
 
    private static <T> JsonElement dumpRegistry(final Registry<T> registry) {
-      JsonObject result = new JsonObject();
-      if (registry instanceof DefaultedRegistry) {
-         Identifier defaultKey = ((DefaultedRegistry)registry).getDefaultKey();
-         result.addProperty("default", defaultKey.toString());
-      }
+    JsonObject result = new JsonObject();
+    if (registry instanceof DefaultedRegistry) {
+        Identifier defaultKey = ((DefaultedRegistry) registry).getDefaultKey();
+        result.addProperty("default", defaultKey.toString());
+    }
 
-      // 修复：显式强制转型为 Registry<?>，解决泛型捕获转换问题
-      int registryId = BuiltInRegistries.REGISTRY.getId((Registry<?>) registry);
-      result.addProperty("protocol_id", registryId);
-      JsonObject entries = new JsonObject();
-      registry.listElements().forEach(holder -> {
-         T value = holder.value();
-         int protocolId = registry.getId(value);
-         JsonObject entry = new JsonObject();
-         entry.addProperty("protocol_id", protocolId);
-         entries.add(holder.key().identifier().toString(), entry);
-      });
-      result.add("entries", entries);
-      return result;
+    // 使用原始类型强制转型来避开泛型检查
+    int registryId = BuiltInRegistries.REGISTRY.getId((Registry) registry);
+    result.addProperty("protocol_id", registryId);
+    JsonObject entries = new JsonObject();
+    registry.listElements().forEach(holder -> {
+        T value = holder.value();
+        int protocolId = registry.getId(value);
+        JsonObject entry = new JsonObject();
+        entry.addProperty("protocol_id", protocolId);
+        entries.add(holder.key().identifier().toString(), entry);
+    });
+    result.add("entries", entries);
+    return result;
    }
-
    @Override
    public final String getName() {
       return "Registry Dump";
