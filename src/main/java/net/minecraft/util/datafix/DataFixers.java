@@ -872,7 +872,7 @@ public class DataFixers {
             v2523,
             "Attribute renames",
             createRenamerNoNamespace(
-               ImmutableMap.builder()
+               ImmutableMap.<String, String>builder()
                   .put("generic.maxHealth", "minecraft:generic.max_health")
                   .put("Max Health", "minecraft:generic.max_health")
                   .put("zombie.spawnReinforcements", "minecraft:zombie.spawn_reinforcements")
@@ -891,7 +891,7 @@ public class DataFixers {
                   .put("generic.attackKnockback", "minecraft:generic.attack_knockback")
                   .put("generic.attackSpeed", "minecraft:generic.attack_speed")
                   .put("generic.armorToughness", "minecraft:generic.armor_toughness")
-                  ImmutableMap.<String, String>builder()
+                   .build();
             )
          )
       );
@@ -965,7 +965,7 @@ public class DataFixers {
       fixerUpper.addFixer(new AddNewChoices(v2688, "Added Glow Squid", References.ENTITY));
       fixerUpper.addFixer(new AddNewChoices(v2688, "Added Glow Item Frame", References.ENTITY));
       Schema v2690 = fixerUpper.addSchema(2690, SAME_NAMESPACED);
-      ImmutableMap<String, String> copperBlocksToRename = ImmutableMap.builder()
+      ImmutableMap<String, String> copperBlocksToRename = ImmutableMap.<String, String>builder()
          .put("minecraft:weathered_copper_block", "minecraft:oxidized_copper_block")
          .put("minecraft:semi_weathered_copper_block", "minecraft:weathered_copper_block")
          .put("minecraft:lightly_weathered_copper_block", "minecraft:exposed_copper_block")
@@ -986,7 +986,7 @@ public class DataFixers {
          .put("minecraft:waxed_lightly_weathered_cut_copper_stairs", "minecraft:waxed_exposed_cut_copper_stairs")
          .put("minecraft:waxed_semi_weathered_cut_copper_slab", "minecraft:waxed_weathered_cut_copper_slab")
          .put("minecraft:waxed_lightly_weathered_cut_copper_slab", "minecraft:waxed_exposed_cut_copper_slab")
-         ImmutableMap.<String, String>builder()
+          .build();
       fixerUpper.addFixer(ItemRenameFix.create(v2690, "Renamed copper block items to new oxidized terms", createRenamer(copperBlocksToRename)));
       fixerUpper.addFixer(BlockRenameFix.create(v2690, "Renamed copper blocks to new oxidized terms", createRenamer(copperBlocksToRename)));
       Schema v2691 = fixerUpper.addSchema(2691, SAME_NAMESPACED);
@@ -1001,7 +1001,7 @@ public class DataFixers {
       Schema v2693 = fixerUpper.addSchema(2693, SAME_NAMESPACED);
       fixerUpper.addFixer(new AddFlagIfNotPresentFix(v2693, References.WORLD_GEN_SETTINGS, "has_increased_height_already", false));
       Schema v2696 = fixerUpper.addSchema(2696, SAME_NAMESPACED);
-      ImmutableMap<String, String> grimstoneBlocksToRename = ImmutableMap.builder()
+      ImmutableMap<String, String> grimstoneBlocksToRename = ImmutableMap.<String, String>builder()
          .put("minecraft:grimstone", "minecraft:deepslate")
          .put("minecraft:grimstone_slab", "minecraft:cobbled_deepslate_slab")
          .put("minecraft:grimstone_stairs", "minecraft:cobbled_deepslate_stairs")
@@ -1019,7 +1019,7 @@ public class DataFixers {
          .put("minecraft:grimstone_brick_stairs", "minecraft:deepslate_brick_stairs")
          .put("minecraft:grimstone_brick_wall", "minecraft:deepslate_brick_wall")
          .put("minecraft:chiseled_grimstone", "minecraft:chiseled_deepslate")
-         ImmutableMap.<String, String>builder()
+          .build();
       fixerUpper.addFixer(ItemRenameFix.create(v2696, "Renamed grimstone block items to deepslate", createRenamer(grimstoneBlocksToRename)));
       fixerUpper.addFixer(BlockRenameFix.create(v2696, "Renamed grimstone blocks to deepslate", createRenamer(grimstoneBlocksToRename)));
       Schema v2700 = fixerUpper.addSchema(2700, SAME_NAMESPACED);
@@ -1119,7 +1119,7 @@ public class DataFixers {
             "game_event_renames_3084",
             References.GAME_EVENT_NAME,
             createRenamer(
-               ImmutableMap.builder()
+               ImmutableMap.<String, String>builder()
                   .put("minecraft:block_press", "minecraft:block_activate")
                   .put("minecraft:block_switch", "minecraft:block_activate")
                   .put("minecraft:block_unpress", "minecraft:block_deactivate")
@@ -1135,7 +1135,7 @@ public class DataFixers {
                   .put("minecraft:shulker_close", "minecraft:container_close")
                   .put("minecraft:shulker_open", "minecraft:container_open")
                   .put("minecraft:wolf_shaking", "minecraft:entity_shake")
-                  ImmutableMap.<String, String>builder()
+                   .build();
             )
          )
       );
@@ -1157,7 +1157,7 @@ public class DataFixers {
             m.put(10, "minecraft:all_black");
          })::get)
       );
-      ImmutableMap<String, String> catAdvancementMigrationMap = ImmutableMap.builder()
+      ImmutableMap<String, String> catAdvancementMigrationMap = ImmutableMap.<String, String>builder()
          .put("textures/entity/cat/tabby.png", "minecraft:tabby")
          .put("textures/entity/cat/black.png", "minecraft:black")
          .put("textures/entity/cat/red.png", "minecraft:red")
@@ -1169,7 +1169,7 @@ public class DataFixers {
          .put("textures/entity/cat/white.png", "minecraft:white")
          .put("textures/entity/cat/jellie.png", "minecraft:jellie")
          .put("textures/entity/cat/all_black.png", "minecraft:all_black")
-         ImmutableMap.<String, String>builder()
+          .build();
       fixerUpper.addFixer(
          new CriteriaRenameFix(
             v3086, "Migrate cat variant advancement", "minecraft:husbandry/complete_catalogue", s -> (String)catAdvancementMigrationMap.getOrDefault(s, s)
