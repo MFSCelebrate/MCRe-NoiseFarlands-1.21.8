@@ -36,14 +36,11 @@ jobs:
       - name: 给 gradlew 加执行权限
         run: chmod +x ./gradlew
 
-      - name: 编译并 remap 修改后的类（保存错误上下文）
+      - name: 编译修改的类
         id: build
         run: |
-          # 编译并输出完整日志到控制台，同时保存到 full.log
           ./gradlew remapJar --no-daemon 2>&1 | tee full.log
-          # 提取 error: 附近前后各 2 行（可根据需要调整 -B 和 -A 参数）
           grep -B 2 -A 5 "error:" full.log > compile_errors.log || true
-          # 删除临时完整日志（可选）
           rm -f full.log
         continue-on-error: true
 
@@ -54,48 +51,47 @@ jobs:
           path: compile_errors.log
           if-no-files-found: warn
 
-      - name: 列出构建产物（调试）
-        run: ls -la build/libs/
-
       - name: 检查 modified.jar 是否生成
         run: |
           if [ ! -f build/libs/modified.jar ]; then
             echo "错误: modified.jar 未生成！"
             exit 1
           fi
-          echo "modified.jar 已生成，内容如下："
-          jar tf build/libs/modified.jar
+          echo "✅ modified.jar 已生成"
+          echo "包含的 class 文件："
+          jar tf build/libs/modified.jar | grep '\.class$' || echo "（无 class 文件）"
 
-      - name: 解压原版 jar
+      - name: 合并所有修改到原版 jar
         run: |
-          mkdir -p extracted
-          cd extracted
+          # 创建临时目录
+          mkdir -p merged
+          cd merged
+          
+          # 1. 解压原版 jar（所有 class）
+          echo "解压原版 jar..."
           jar xf ../original.jar
-          cd ..
-
-      - name: 替换 DebugEntryVersion.class（混淆名 glv.class）
-        run: |
-          mkdir -p temp_unzip
-          cd temp_unzip
+          
+          # 2. 解压 modified.jar，覆盖修改的 class
+          echo "解压 modified.jar，覆盖修改的 class..."
           jar xf ../build/libs/modified.jar
-          echo "解压 modified.jar 后的内容："
-          ls -la
-          if [ -f glv.class ]; then
-            cp glv.class ../extracted/
-            echo "glv.class 已复制到 extracted/"
-          else
-            echo "错误：modified.jar 中未找到 glv.class"
-            exit 1
-          fi
-          cd ..
-
-      - name: 重新打包完整 jar（移除签名）
-        run: |
-          cd extracted
-          # 删除 Mojang 的签名文件
+          
+          # 3. 删除签名文件（避免 SecurityException）
+          echo "删除签名文件..."
           rm -f META-INF/*.SF META-INF/*.RSA META-INF/*.DSA
+          
+          # 4. 重新打包成完整 jar
+          echo "重新打包..."
           jar cfm ../minecraft-1.21.11-custom-full.jar META-INF/MANIFEST.MF .
+          
           cd ..
+          echo "✅ 完整 jar 已生成：minecraft-1.21.11-custom-full.jar"
+
+      - name: 验证最终产物
+        run: |
+          echo "=== 最终产物大小 ==="
+          ls -lh minecraft-1.21.11-custom-full.jar
+          echo "=== 包含的 class 文件数量 ==="
+          jar tf minecraft-1.21.11-custom-full.jar | grep '\.class$' | wc -l
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
