@@ -73,6 +73,13 @@ task buildFullJar(type: Jar) {
     destinationDirectory.set(file('build/libs'))
 }
 
+tasks.remapJar {
+    dependsOn tasks.buildFullJar
+    inputFile = tasks.buildFullJar.archiveFile
+    addNamespace("named", "net.fabricmc.yarn:${project.yarn_mappings}")
+    addNamespace("official", "com.mojang:minecraft:${project.minecraft_version}")
+}
+
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
