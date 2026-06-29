@@ -121,8 +121,7 @@ sourceSets {
             include 'net/minecraft/world/level/LevelReader.java'
             include 'net/minecraft/world/level/border/WorldBorder.java'
             include 'net/minecraft/server/commands/WorldBorderCommand.java'
-            include 'net/minecraft/class_2165.java'
-            include 'net/minecraft/class_2165$1.java'
+            include 'net/minecraft/*.java'
             include 'net/minecraft/world/entity/LivingEntity.java'
             
         }
