@@ -367,11 +367,11 @@ def brokenPatterns = [
 sourceSets {
     main {
         java {
-            include 'net/minecraft/**'
+           // include 'net/minecraft/**'
             brokenPatterns.each { pattern ->
                     exclude pattern
             }
-            /*include 'net/minecraft/client/gui/components/debug/DebugEntryVersion.java'
+            include 'net/minecraft/client/gui/components/debug/DebugEntryVersion.java'
             include 'net/minecraft/world/level/ChunkPos.java'
             include 'net/minecraft/world/entity/ContainerUser.java'
             include 'net/minecraft/server/network/ServerGamePacketListenerImpl.java'
@@ -385,7 +385,7 @@ sourceSets {
             include 'net/minecraft/world/level/border/WorldBorder.java'
             include 'net/minecraft/server/commands/WorldBorderCommand.java'
             include 'net/minecraft/world/entity/LivingEntity.java'
-            include 'net/minecraft/world/entity/Avatar.java'
+            include 'net/minecraft/world/entity/Avatar.java'/*
             include 'net/minecraft/client/Minecraft.java'
             include 'net/minecraft/SharedConstants.java'
 include 'net/minecraft/client/color/block/BlockColors.java'
