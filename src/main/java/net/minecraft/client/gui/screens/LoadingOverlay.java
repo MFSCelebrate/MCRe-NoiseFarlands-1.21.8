@@ -43,11 +43,10 @@ public class LoadingOverlay extends Overlay {
    public static final long FADE_OUT_TIME = 1000L;
    public static final long FADE_IN_TIME = 500L;
    
-   // ====== 新增日志相关 ======
    private static final Logger LOGGER = LogUtils.getLogger();
    private long lastLogTime = 0L;
-   // ====== 新增结束 ======
-
+   private int stuckCounter = 0;  // 新增：卡住计数器
+   
    private final Minecraft minecraft;
    private final ReloadInstance reload;
    private final Consumer<Optional<Throwable>> onFinish;
@@ -73,6 +72,7 @@ public class LoadingOverlay extends Overlay {
 
    @Override
    public void render(final GuiGraphics graphics, final int mouseX, final int mouseY, final float a) {
+      // 原 render 方法保持不变
       int width = graphics.guiWidth();
       int height = graphics.guiHeight();
       long now = Util.getMillis();
@@ -160,26 +160,41 @@ public class LoadingOverlay extends Overlay {
       }
    }
 
-   // ====== 替换后的 tick() 方法 ======
    @Override
-public void tick() {
-    long now = System.currentTimeMillis();
-    if (now - this.lastLogTime > 2000L) {
-        this.lastLogTime = now;
-        float progress = this.reload.getActualProgress();
-        LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}", progress, this.reload.isDone());
-        if (progress > 0.99 && !this.reload.isDone() && now - this.lastLogTime > 30000L) {
-            LOGGER.warn("进度卡住超过30秒，强制完成加载！");
+   public void tick() {
+      // 检测卡住状态
+      float progress = this.reload.getActualProgress();
+      if (progress > 0.99 && !this.reload.isDone()) {
+         this.stuckCounter++;
+      } else {
+         this.stuckCounter = 0;
+      }
+      
+      // 卡住超过 100 tick（约 5 秒）强制完成
+      if (this.stuckCounter > 100) {
+         LOGGER.warn("进度卡在 99%+ 超过 100 tick，强制完成加载！");
+         try {
             this.reload.checkExceptions();
             this.onFinish.accept(Optional.empty());
-            this.fadeOutStart = Util.getMillis();
-            if (this.minecraft.screen != null) {
-                Window window = this.minecraft.getWindow();
-                this.minecraft.screen.init(window.getGuiScaledWidth(), window.getGuiScaledHeight());
-            }
-        }
-    }
-    // ... 原有逻辑
+         } catch (Throwable t) {
+            this.onFinish.accept(Optional.of(t));
+         }
+         this.fadeOutStart = Util.getMillis();
+         if (this.minecraft.screen != null) {
+            Window window = this.minecraft.getWindow();
+            this.minecraft.screen.init(window.getGuiScaledWidth(), window.getGuiScaledHeight());
+         }
+         return;
+      }
+
+      // 日志输出（每 2 秒）
+      long now = System.currentTimeMillis();
+      if (now - this.lastLogTime > 2000L) {
+         this.lastLogTime = now;
+         LOGGER.info("LoadingOverlay tick: 进度 {}, isDone: {}, stuckCounter: {}", progress, this.reload.isDone(), this.stuckCounter);
+      }
+
+      // 原有逻辑
       if (this.fadeOutStart == -1L && this.reload.isDone() && this.isReadyToFadeOut()) {
          try {
             this.reload.checkExceptions();
@@ -195,7 +210,6 @@ public void tick() {
          }
       }
    }
-   // ====== tick() 替换结束 ======
 
    private boolean isReadyToFadeOut() {
       return !this.fadeIn || this.fadeInStart > -1L && Util.getMillis() - this.fadeInStart >= 1000L;
