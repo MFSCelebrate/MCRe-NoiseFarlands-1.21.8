@@ -108,7 +108,8 @@ processResources {
 sourceSets {
     main {
         java {
-            include 'net/minecraft/client/gui/components/debug/DebugEntryVersion.java'
+            include 'net/minecraft/**'
+            /*include 'net/minecraft/client/gui/components/debug/DebugEntryVersion.java'
             include 'net/minecraft/world/level/ChunkPos.java'
             include 'net/minecraft/world/entity/ContainerUser.java'
             include 'net/minecraft/server/network/ServerGamePacketListenerImpl.java'
@@ -197,7 +198,7 @@ include 'net/minecraft/util/Util.java'
 //include 'net/minecraft/util/datafix/DataFixers.java'
 include 'net/minecraft/util/profiling/ContinuousProfiler.java'
 include 'net/minecraft/world/level/storage/LevelStorageSource.java'
-
+*/
         }
     }
 }
